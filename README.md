@@ -104,10 +104,11 @@ Some ideas I had but haven't gotten to yet:
 - Nutritional information for recipes
 - Shopping list export to different formats
 - More recipes in the database
+- Possibly Making A App For Mac?
 
 ## License
 
-MIT License - do whatever you want with it.
+MIT License - If your showing it to someone, please tell them that i made this.
 
 ## Notes
 
