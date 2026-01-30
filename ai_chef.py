@@ -5,6 +5,7 @@ A command-line application to help you discover recipes, plan meals, and cook sm
 """
 
 import os
+from dotenv import load_dotenv
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -468,10 +469,10 @@ def main():
     display_banner()
     console.print("[dim]Making cooking easier, one recipe at a time...[/dim]\n")
     
-    # Check for API key
-    from dotenv import load_dotenv
+    # Load environment variables
     load_dotenv()
     
+    # Check for API key
     if not os.getenv("OPENAI_API_KEY"):
         console.print("[yellow]⚠️  Note: OPENAI_API_KEY not found. AI features will be limited.[/yellow]")
         console.print("[dim]Set up your API key in a .env file to enable AI recipe generation.[/dim]\n")
