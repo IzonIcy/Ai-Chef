@@ -21,7 +21,7 @@ class MealPlanner:
             try:
                 with open(self.filename, 'r') as f:
                     return json.load(f)
-            except:
+            except (json.JSONDecodeError, IOError):
                 return {}
         return {}
     
@@ -177,7 +177,7 @@ class SavedRecipes:
             try:
                 with open(self.filename, 'r') as f:
                     return json.load(f)
-            except:
+            except (json.JSONDecodeError, IOError):
                 return []
         return []
     
