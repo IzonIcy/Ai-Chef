@@ -19,9 +19,22 @@ Honestly? I was wasting so much food and money because I'd buy ingredients witho
 
 ## Getting Started
 
-You'll need Python 3.8 or newer installed. For the AI features, you'll also need an OpenAI API key (but the app still works without it - you just won't be able to generate custom recipes).
+### Option 1: Download the macOS App (.dmg)
 
-### Setup
+If you're on macOS and just want to use the app without any setup:
+
+1. Download the latest `AI-Chef.dmg` file from the [Releases](https://github.com/yourusername/Ai-Chef/releases) page
+2. Open the `.dmg` file (double-click it)
+3. Drag the **AI Chef** app icon to the **Applications** folder
+4. Open Applications and launch **AI Chef**
+
+That's it! The app is ready to use. For AI recipe generation, you'll still need to set your OpenAI API key when you first run it.
+
+### Option 2: Command Line (CLI)
+
+If you prefer the terminal version or want to develop/customize it:
+
+You'll need Python 3.8 or newer installed. For the AI features, you'll also need an OpenAI API key (but the app still works without it - you just won't be able to generate custom recipes).
 
 Clone this repo:
 ```bash
@@ -41,9 +54,7 @@ OPENAI_API_KEY=your-api-key-here
 
 (You can also just export it as an environment variable if you prefer)
 
-### Running it
-
-Just run:
+Running it:
 ```bash
 python ai_chef.py
 ```
