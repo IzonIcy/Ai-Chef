@@ -8,8 +8,8 @@ import sys
 import os
 from pathlib import Path
 
-# Add parent directory to path to import AI Chef modules
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add project root to path so we can import recipes, ai_generator, meal_planner
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from recipes import find_recipes_by_ingredients, RECIPE_DATABASE
 from ai_generator import generate_recipe_with_ai, get_cooking_tips
