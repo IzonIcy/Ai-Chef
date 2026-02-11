@@ -25,8 +25,10 @@ from ai_generator import (
     suggest_substitutions
 )
 from meal_planner import MealPlanner, SavedRecipes
+from gamification import GamificationManager
 
 console = Console()
+gamification = GamificationManager()
 
 
 def display_banner():
@@ -40,12 +42,84 @@ def display_banner():
     console.print(banner, style="bold cyan")
 
 
+def display_gamification_status():
+    """Display current gamification status."""
+    status = gamification.get_gamification_status()
+    streak = status["streak"]
+    achievements = status["achievements"]
+    challenges = status["challenges"]
+    
+    # Display streak
+    console.print(f"\n[bold yellow]🔥 Your Streak: {streak['current_streak']} days[/bold yellow]")
+    console.print(f"[dim]Longest streak: {streak['longest_streak']} days | Total meals: {streak['total_meals']}[/dim]")
+    
+    # Display achievements
+    if achievements["unlocked"]:
+        console.print(f"\n[bold green]🏆 Achievements Unlocked ({len(achievements['unlocked'])}):[/bold green]")
+        for achievement in achievements["unlocked"]:
+            console.print(f"  {achievement['icon']} {achievement['name']} - {achievement['description']}")
+    
+    # Display weekly challenges
+    console.print(f"\n[bold cyan]🎯 This Week's Challenges:[/bold cyan]")
+    for challenge in challenges:
+        progress = challenge["progress"]
+        target = challenge["target"]
+        percent = int((min(progress, target) / target) * 100)
+        bar_filled = int(percent / 10)
+        bar = "█" * bar_filled + "░" * (10 - bar_filled)
+        
+        status_icon = "✓" if challenge["completed"] else " "
+        console.print(f"  [{status_icon}] {challenge['name']}")
+        console.print(f"      [{bar}] {progress}/{target} - {challenge['reward']}")
+
+
+def display_achievements_menu():
+    """Display achievements and badges."""
+    console.print("\n[bold yellow]🏆 Achievements & Badges[/bold yellow]\n")
+    
+    status = gamification.get_gamification_status()
+    achievements = status["achievements"]
+    unlocked = achievements["unlocked"]
+    locked = achievements["locked"]
+    
+    # Display unlocked achievements
+    if unlocked:
+        console.print(f"[bold green]Unlocked ({len(unlocked)})[/bold green]\n")
+        table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
+        table.add_column("Icon", style="yellow", width=5)
+        table.add_column("Achievement")
+        table.add_column("Date Unlocked", style="dim")
+        
+        for achievement in unlocked:
+            table.add_row(
+                achievement['icon'],
+                f"{achievement['name']}\n{achievement['description']}",
+                achievement.get('unlock_date', 'N/A')[:10]
+            )
+        console.print(table)
+    
+    # Display locked achievements
+    if locked:
+        console.print(f"\n[bold cyan]Locked ({len(locked)})[/bold cyan]\n")
+        table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
+        table.add_column("Icon", style="dim", width=5)
+        table.add_column("Achievement", style="dim")
+        
+        for achievement in locked:
+            table.add_row(
+                achievement['icon'],
+                f"{achievement['name']}\n{achievement['description']}"
+            )
+        console.print(table)
+    
+    console.print("\n[dim]Keep cooking to unlock more achievements![/dim]")
+
+
 def display_recipe(recipe):
     """Display a recipe in a nice format."""
     console.print(f"\n[bold cyan]{'='*60}[/bold cyan]")
     console.print(f"[bold yellow]{recipe['name']}[/bold yellow]")
     console.print(f"[bold cyan]{'='*60}[/bold cyan]\n")
-    
     # Info table
     info_table = Table(show_header=False, box=box.SIMPLE)
     info_table.add_column("Property", style="cyan")
@@ -154,6 +228,17 @@ def find_recipes_menu():
                     saved_recipes = SavedRecipes()
                     if saved_recipes.add_recipe(recipe):
                         console.print("[green]✓ Recipe saved![/green]")
+                        # Record gamification
+                        is_veg = "vegetarian" in [d.lower() for d in recipe.get("dietary", [])]
+                        is_vegan = "vegan" in [d.lower() for d in recipe.get("dietary", [])]
+                        gamification.record_recipe_cooked(
+                            recipe_name=recipe["name"],
+                            cuisine=recipe.get("cuisine"),
+                            cooking_time=recipe.get("cook_time"),
+                            is_vegetarian=is_veg,
+                            is_vegan=is_vegan
+                        )
+                        console.print("[cyan]📈 Gamification updated![/cyan]")
                     else:
                         console.print("[yellow]Recipe already in favorites.[/yellow]")
         except ValueError:
@@ -219,6 +304,17 @@ def ai_recipe_menu():
         saved_recipes = SavedRecipes()
         if saved_recipes.add_recipe(recipe):
             console.print("[green]✓ Recipe saved![/green]")
+            # Record gamification
+            is_veg = dietary and "vegetarian" in dietary.lower()
+            is_vegan = dietary and "vegan" in dietary.lower()
+            gamification.record_recipe_cooked(
+                recipe_name=recipe.get("name", "AI Recipe"),
+                cuisine=cuisine,
+                cooking_time=cook_time,
+                is_vegetarian=is_veg,
+                is_vegan=is_vegan
+            )
+            console.print("[cyan]📈 Gamification updated![/cyan]")
 
 
 def meal_planning_menu():
@@ -444,10 +540,12 @@ def main_menu():
         console.print("[cyan]3.[/cyan] 📅 Meal planning")
         console.print("[cyan]4.[/cyan] 💾 View saved recipes")
         console.print("[cyan]5.[/cyan] 📖 Browse all recipes")
-        console.print("[cyan]6.[/cyan] 🚪 Exit")
+        console.print("[cyan]6.[/cyan] 🏆 View achievements")
+        console.print("[cyan]7.[/cyan] 📊 Gamification status")
+        console.print("[cyan]8.[/cyan] 🚪 Exit")
         console.print("[bold cyan]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold cyan]")
         
-        choice = Prompt.ask("\nSelect an option", choices=["1", "2", "3", "4", "5", "6"])
+        choice = Prompt.ask("\nSelect an option", choices=["1", "2", "3", "4", "5", "6", "7", "8"])
         
         if choice == "1":
             find_recipes_menu()
@@ -460,6 +558,10 @@ def main_menu():
         elif choice == "5":
             browse_all_recipes()
         elif choice == "6":
+            display_achievements_menu()
+        elif choice == "7":
+            display_gamification_status()
+        elif choice == "8":
             console.print("\n[bold cyan]Thanks for using AI Chef! Happy cooking! 👨‍🍳[/bold cyan]\n")
             break
 
