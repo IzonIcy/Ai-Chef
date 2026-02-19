@@ -24,11 +24,21 @@ from ai_generator import (
     get_cooking_tips,
     suggest_substitutions
 )
-from meal_planner import MealPlanner, SavedRecipes
+from meal_planner import MealPlanner, SavedRecipes, PantryManager
 from gamification import GamificationManager
 
 console = Console()
 gamification = GamificationManager()
+
+
+def parse_optional_int(value):
+    """Safely parse optional integer input."""
+    if not value:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
 
 
 def display_banner():
@@ -159,6 +169,10 @@ def find_recipes_menu():
     # Optional filters
     console.print("\n[dim]Optional filters (press Enter to skip):[/dim]")
     max_time = Prompt.ask("Maximum cook time (minutes)", default="")
+    max_time_int = parse_optional_int(max_time)
+    if max_time and max_time_int is None:
+        console.print("[yellow]Invalid cook time entered. Skipping cook time filter.[/yellow]")
+
     difficulty = Prompt.ask("Difficulty level (easy/medium/hard)", default="")
     dietary = Prompt.ask("Dietary preference (vegetarian/vegan/gluten-free)", default="")
     
@@ -172,7 +186,7 @@ def find_recipes_menu():
             recipe = match["recipe"]
             passes = True
             
-            if max_time and recipe["cook_time"] > int(max_time):
+            if max_time_int is not None and recipe["cook_time"] > max_time_int:
                 passes = False
             if difficulty and recipe["difficulty"].lower() != difficulty.lower():
                 passes = False
@@ -274,8 +288,11 @@ def ai_recipe_menu():
         dietary = Prompt.ask("Dietary preference", default="")
         cuisine = Prompt.ask("Cuisine type", default="")
         time_input = Prompt.ask("Max cook time (minutes)", default="")
-        if time_input:
-            cook_time = int(time_input)
+        parsed_time = parse_optional_int(time_input)
+        if time_input and parsed_time is None:
+            console.print("[yellow]Invalid cook time entered. Skipping cook time limit.[/yellow]")
+        else:
+            cook_time = parsed_time
         difficulty = Prompt.ask("Difficulty level", default="")
     
     console.print("\n[cyan]🧠 Generating your custom recipe with AI...[/cyan]\n")
@@ -311,10 +328,151 @@ def ai_recipe_menu():
                 recipe_name=recipe.get("name", "AI Recipe"),
                 cuisine=cuisine,
                 cooking_time=cook_time,
-                is_vegetarian=is_veg,
-                is_vegan=is_vegan
+                is_vegetarian=bool(is_veg),
+                is_vegan=bool(is_vegan)
             )
             console.print("[cyan]📈 Gamification updated![/cyan]")
+
+
+def ai_cooking_tips_menu():
+    """Menu for AI cooking tips."""
+    console.print("\n[bold yellow]💡 AI Cooking Tips[/bold yellow]\n")
+
+    recipe_name = Prompt.ask("Enter recipe name")
+    if not recipe_name.strip():
+        console.print("[yellow]Please enter a recipe name.[/yellow]")
+        return
+
+    dietary_preferences = Prompt.ask("Dietary preferences (optional)", default="")
+    dietary_value = dietary_preferences if dietary_preferences else None
+
+    console.print("\n[cyan]Generating tips...[/cyan]\n")
+    tips = get_cooking_tips(recipe_name, dietary_value)
+    console.print(Panel(Markdown(tips), title=f"Tips for {recipe_name}", border_style="cyan"))
+
+
+def ingredient_substitutions_menu():
+    """Menu for ingredient substitutions."""
+    console.print("\n[bold yellow]🔁 Ingredient Substitutions[/bold yellow]\n")
+
+    ingredient = Prompt.ask("Enter ingredient to substitute")
+    if not ingredient.strip():
+        console.print("[yellow]Please enter an ingredient.[/yellow]")
+        return
+
+    console.print("\n[cyan]Finding substitutions...[/cyan]\n")
+    substitutions = suggest_substitutions(ingredient)
+    console.print(Panel(Markdown(substitutions), title=f"Substitutions for {ingredient}", border_style="green"))
+
+
+def pantry_menu():
+    """Menu for pantry inventory and expiry tracking."""
+    console.print("\n[bold yellow]🥫 Pantry Manager[/bold yellow]\n")
+
+    pantry = PantryManager()
+
+    console.print("1. View pantry items")
+    console.print("2. Add pantry item")
+    console.print("3. Remove pantry item")
+    console.print("4. View expiring soon")
+    console.print("5. Suggest recipes using expiring items")
+
+    choice = Prompt.ask("\nSelect an option", choices=["1", "2", "3", "4", "5"])
+
+    if choice == "1":
+        items = pantry.get_all_items()
+        if not items:
+            console.print("[yellow]Your pantry is empty.[/yellow]")
+            return
+
+        table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
+        table.add_column("Item", style="yellow")
+        table.add_column("Quantity", justify="center")
+        table.add_column("Unit", justify="center")
+        table.add_column("Expires", style="dim")
+
+        for item in items:
+            table.add_row(
+                item.get("name", "Unknown"),
+                str(item.get("quantity", 0)),
+                item.get("unit", "item"),
+                item.get("expires_on") or "-"
+            )
+        console.print(table)
+
+    elif choice == "2":
+        name = Prompt.ask("Ingredient name")
+        quantity_input = Prompt.ask("Quantity", default="1")
+        quantity = parse_optional_int(quantity_input)
+        if quantity is None or quantity <= 0:
+            console.print("[yellow]Invalid quantity. Using 1.[/yellow]")
+            quantity = 1
+
+        unit = Prompt.ask("Unit (item, cup, tbsp, etc.)", default="item")
+        expires_on = Prompt.ask("Expiry date (YYYY-MM-DD, optional)", default="")
+        expires_value = expires_on if expires_on else None
+
+        pantry.add_item(name=name, quantity=quantity, unit=unit, expires_on=expires_value)
+        console.print(f"[green]✓ Added {name} to pantry.[/green]")
+
+    elif choice == "3":
+        name = Prompt.ask("Ingredient name to remove")
+        if pantry.remove_item(name):
+            console.print(f"[green]✓ Removed {name} from pantry.[/green]")
+        else:
+            console.print("[yellow]Item not found.[/yellow]")
+
+    elif choice == "4":
+        expiring = pantry.get_expiring_items(within_days=3)
+        if not expiring:
+            console.print("[green]No items expiring in the next 3 days.[/green]")
+            return
+
+        table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
+        table.add_column("Item", style="yellow")
+        table.add_column("Days Left", justify="center")
+        table.add_column("Expiry Date", style="dim")
+
+        for item in expiring:
+            days_left = item.get("days_left", 0)
+            days_display = "Expired" if days_left < 0 else str(days_left)
+            table.add_row(item.get("name", "Unknown"), days_display, item.get("expires_on", "-"))
+        console.print(table)
+
+    elif choice == "5":
+        pantry_ingredients = pantry.get_pantry_ingredients()
+        if not pantry_ingredients:
+            console.print("[yellow]Your pantry is empty. Add ingredients first.[/yellow]")
+            return
+
+        expiring_items = pantry.get_expiring_items(within_days=3)
+        expiring_names = {item.get("name", "").strip().lower() for item in expiring_items}
+
+        matches = find_recipes_by_ingredients(pantry_ingredients)
+        for match in matches:
+            recipe_ingredients = {ingredient.lower() for ingredient in match["recipe"].get("ingredients", [])}
+            match["use_soon_count"] = len(recipe_ingredients.intersection(expiring_names))
+
+        matches.sort(key=lambda m: (m.get("use_soon_count", 0), m["match_percentage"]), reverse=True)
+
+        if not matches:
+            console.print("[yellow]No recipe suggestions found for current pantry items.[/yellow]")
+            return
+
+        table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
+        table.add_column("#", style="dim", width=3)
+        table.add_column("Recipe", style="yellow")
+        table.add_column("Use-Soon Match", justify="center")
+        table.add_column("Ingredient Match", justify="center")
+
+        for idx, match in enumerate(matches[:10], 1):
+            table.add_row(
+                str(idx),
+                match["recipe"]["name"],
+                str(match.get("use_soon_count", 0)),
+                f"{match['match_percentage']*100:.0f}%"
+            )
+        console.print(table)
 
 
 def meal_planning_menu():
@@ -334,8 +492,11 @@ def meal_planning_menu():
         console.print("\n[dim]Optional preferences:[/dim]")
         dietary = Prompt.ask("Dietary preference", default="")
         max_time = Prompt.ask("Max cook time per meal (minutes)", default="")
-        
-        max_time_int = int(max_time) if max_time else None
+
+        max_time_int = parse_optional_int(max_time)
+        if max_time and max_time_int is None:
+            console.print("[yellow]Invalid cook time entered. Skipping cook time filter.[/yellow]")
+
         dietary_pref = dietary if dietary else None
         
         console.print("\n[cyan]Creating your weekly meal plan...[/cyan]\n")
@@ -401,8 +562,8 @@ def meal_planning_menu():
         
         for category, items in grocery_list.items():
             console.print(f"\n[bold cyan]{category}:[/bold cyan]")
-            for item in sorted(items):
-                console.print(f"  □ {item}")
+            for item in sorted(items, key=lambda x: x.get("item", "")):
+                console.print(f"  □ {item.get('item', 'Unknown')} ({item.get('quantity', 1)} {item.get('unit', 'recipe-use')})")
     
     elif choice == "4":
         console.print("\nAvailable recipes:")
@@ -479,12 +640,16 @@ def browse_all_recipes():
     # Apply filters
     console.print("[dim]Optional filters (press Enter to skip):[/dim]")
     max_time = Prompt.ask("Maximum cook time (minutes)", default="")
+    max_time_int = parse_optional_int(max_time)
+    if max_time and max_time_int is None:
+        console.print("[yellow]Invalid cook time entered. Skipping cook time filter.[/yellow]")
+
     difficulty = Prompt.ask("Difficulty level (easy/medium/hard)", default="")
     dietary = Prompt.ask("Dietary preference", default="")
     cuisine = Prompt.ask("Cuisine type", default="")
     
     filtered = filter_recipes(
-        cook_time=int(max_time) if max_time else None,
+        cook_time=max_time_int,
         difficulty=difficulty if difficulty else None,
         dietary=dietary if dietary else None,
         cuisine=cuisine if cuisine else None
@@ -538,14 +703,17 @@ def main_menu():
         console.print("[cyan]1.[/cyan] 🔍 Find recipes by ingredients")
         console.print("[cyan]2.[/cyan] 🤖 Generate custom recipe with AI")
         console.print("[cyan]3.[/cyan] 📅 Meal planning")
-        console.print("[cyan]4.[/cyan] 💾 View saved recipes")
-        console.print("[cyan]5.[/cyan] 📖 Browse all recipes")
-        console.print("[cyan]6.[/cyan] 🏆 View achievements")
-        console.print("[cyan]7.[/cyan] 📊 Gamification status")
-        console.print("[cyan]8.[/cyan] 🚪 Exit")
+        console.print("[cyan]4.[/cyan] 🥫 Pantry manager")
+        console.print("[cyan]5.[/cyan] 💾 View saved recipes")
+        console.print("[cyan]6.[/cyan] 📖 Browse all recipes")
+        console.print("[cyan]7.[/cyan] 🏆 View achievements")
+        console.print("[cyan]8.[/cyan] 📊 Gamification status")
+        console.print("[cyan]9.[/cyan] 💡 AI cooking tips")
+        console.print("[cyan]10.[/cyan] 🔁 Ingredient substitutions")
+        console.print("[cyan]11.[/cyan] 🚪 Exit")
         console.print("[bold cyan]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold cyan]")
         
-        choice = Prompt.ask("\nSelect an option", choices=["1", "2", "3", "4", "5", "6", "7", "8"])
+        choice = Prompt.ask("\nSelect an option", choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"])
         
         if choice == "1":
             find_recipes_menu()
@@ -554,14 +722,20 @@ def main_menu():
         elif choice == "3":
             meal_planning_menu()
         elif choice == "4":
-            saved_recipes_menu()
+            pantry_menu()
         elif choice == "5":
-            browse_all_recipes()
+            saved_recipes_menu()
         elif choice == "6":
-            display_achievements_menu()
+            browse_all_recipes()
         elif choice == "7":
-            display_gamification_status()
+            display_achievements_menu()
         elif choice == "8":
+            display_gamification_status()
+        elif choice == "9":
+            ai_cooking_tips_menu()
+        elif choice == "10":
+            ingredient_substitutions_menu()
+        elif choice == "11":
             console.print("\n[bold cyan]Thanks for using AI Chef! Happy cooking! 👨‍🍳[/bold cyan]\n")
             break
 

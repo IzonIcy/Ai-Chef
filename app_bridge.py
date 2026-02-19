@@ -90,9 +90,11 @@ def get_cooking_tips_api(recipe_name: str) -> dict:
     """
     try:
         tips = get_cooking_tips(recipe_name)
+        tips_list = [line.strip("- •\t") for line in str(tips).splitlines() if line.strip()]
         return {
             "status": "success",
-            "tips": tips
+            "tips": tips_list,
+            "tips_text": tips
         }
     except Exception as e:
         return {

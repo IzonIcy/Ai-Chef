@@ -32,7 +32,11 @@ class CookingStreak:
             "current_streak": 0,
             "longest_streak": 0,
             "last_cooked_date": None,
-            "total_meals_cooked": 0
+            "total_meals_cooked": 0,
+            "quick_meals": 0,
+            "vegetarian_meals": 0,
+            "vegan_meals": 0,
+            "cuisine_counts": {}
         }
     
     def save_streak(self):
@@ -40,7 +44,7 @@ class CookingStreak:
         with open(self.filename, 'w') as f:
             json.dump(self.data, f, indent=2)
     
-    def record_meal_cooked(self):
+    def record_meal_cooked(self, cuisine: str = None, cooking_time: int = None, is_vegetarian: bool = False, is_vegan: bool = False):
         """Record that a meal was cooked today."""
         today = datetime.now().date().isoformat()
         last_date = self.data.get("last_cooked_date")
@@ -71,6 +75,22 @@ class CookingStreak:
         # Update longest streak if needed
         if self.data["current_streak"] > self.data.get("longest_streak", 0):
             self.data["longest_streak"] = self.data["current_streak"]
+
+        # Track cooking metadata for achievements/challenges
+        if cooking_time and cooking_time <= 30:
+            self.data["quick_meals"] = self.data.get("quick_meals", 0) + 1
+
+        if is_vegetarian:
+            self.data["vegetarian_meals"] = self.data.get("vegetarian_meals", 0) + 1
+
+        if is_vegan:
+            self.data["vegan_meals"] = self.data.get("vegan_meals", 0) + 1
+
+        if cuisine:
+            cuisine_key = cuisine.strip().lower()
+            counts = self.data.get("cuisine_counts", {})
+            counts[cuisine_key] = counts.get(cuisine_key, 0) + 1
+            self.data["cuisine_counts"] = counts
         
         self.save_streak()
     
@@ -345,7 +365,12 @@ class GamificationManager:
             is_vegan: Whether recipe is vegan
         """
         # Update streak
-        self.streak.record_meal_cooked()
+        self.streak.record_meal_cooked(
+            cuisine=cuisine,
+            cooking_time=cooking_time,
+            is_vegetarian=is_vegetarian,
+            is_vegan=is_vegan
+        )
         
         # Unlock achievements
         streak_info = self.streak.get_streak_info()
@@ -357,19 +382,42 @@ class GamificationManager:
         
         if streak_info["total_meals"] >= 10:
             self.achievements.unlock_achievement("gourmet_chef")
-        elif streak_info["total_meals"] >= 25:
+        if streak_info["total_meals"] >= 25:
             self.achievements.unlock_achievement("master_chef")
-        elif streak_info["total_meals"] >= 50:
+        if streak_info["total_meals"] >= 50:
             self.achievements.unlock_achievement("culinary_legend")
+
+        streak_data = self.streak.data
+        cuisine_counts = streak_data.get("cuisine_counts", {})
+        quick_meals = streak_data.get("quick_meals", 0)
+        vegetarian_meals = streak_data.get("vegetarian_meals", 0)
+        vegan_meals = streak_data.get("vegan_meals", 0)
+
+        if cuisine_counts.get("italian", 0) >= 3:
+            self.achievements.unlock_achievement("italian_explorer")
+
+        if cuisine_counts.get("asian", 0) >= 3:
+            self.achievements.unlock_achievement("asian_master")
+
+        if cuisine_counts.get("mexican", 0) >= 3:
+            self.achievements.unlock_achievement("mexican_fiesta")
+
+        if vegetarian_meals >= 5:
+            self.achievements.unlock_achievement("vegetarian_champion")
+
+        if vegan_meals >= 5:
+            self.achievements.unlock_achievement("vegan_virtuoso")
+
+        if quick_meals >= 5:
+            self.achievements.unlock_achievement("speed_cook")
         
-        if cooking_time and cooking_time <= 30:
-            self.challenges.update_challenge_progress("speed_cook")
-        
-        if is_vegetarian:
+        if is_vegetarian or is_vegan:
             self.challenges.update_challenge_progress("healthy_week")
-        
-        if is_vegan:
-            self.challenges.update_challenge_progress("healthy_week")
+
+        if cuisine:
+            cuisine_key = cuisine.strip().lower()
+            if cuisine_counts.get(cuisine_key, 0) == 1:
+                self.challenges.update_challenge_progress("try_new_cuisine")
         
         # Update weekly challenges
         self.challenges.update_challenge_progress("cook_five")
