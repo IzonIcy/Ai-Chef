@@ -1,5 +1,5 @@
 """
-AI-powered recipe generation using OpenAI API
+AI-powered recipe generation using OpenAI API Infrastructure.
 """
 
 import os
@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-
 # Initialize client as None, will be created when needed
 client = None
 
@@ -89,7 +88,7 @@ def generate_recipe_with_ai(ingredients=None, dietary_preference=None, cuisine_t
                     }
                 ],
                 temperature=0.7,
-                max_tokens=1000
+                max_tokens=1500
             )
 
             recipe_text = (response.choices[0].message.content or "").strip()
