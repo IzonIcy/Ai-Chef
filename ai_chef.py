@@ -15,6 +15,7 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.prompt import Confirm
+from rich.markdown import Markdown
 from rich import box
 
 from recipes import (
