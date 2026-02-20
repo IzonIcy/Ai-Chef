@@ -5,13 +5,17 @@ A command-line application to help you discover recipes, plan meals, and cook sm
 """
 
 import os
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv():
+        pass
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
-from rich.prompt import Prompt, Confirm
+from rich.prompt import Prompt
+from rich.prompt import Confirm
 from rich import box
-from rich.markdown import Markdown
 
 from recipes import (
     find_recipes_by_ingredients, 
