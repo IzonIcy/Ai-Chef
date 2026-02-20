@@ -4,7 +4,14 @@ import Combine
 class PythonBridge {
     static let shared = PythonBridge()
     
-    private let pythonScript = "/Users/ryanbahadori/Documents/GitHub/Ai-Chef/app_bridge.py"
+    private lazy var projectRoot: String = {
+        let filePath = URL(fileURLWithPath: #filePath)
+        return filePath.deletingLastPathComponent().deletingLastPathComponent().path
+    }()
+
+    private lazy var pythonScript: String = {
+        return URL(fileURLWithPath: projectRoot).appendingPathComponent("app_bridge.py").path
+    }()
     
     /// Find recipes based on ingredients
     func findRecipes(ingredients: [String], completion: @escaping (Result<[[String: Any]], Error>) -> Void) {
@@ -48,6 +55,18 @@ class PythonBridge {
             case .success(let data):
                 if let tips = data["tips"] as? [String] {
                     completion(.success(tips))
+                } else if let tipsText = data["tips"] as? String {
+                    let lines = tipsText
+                        .split(separator: "\n")
+                        .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+                        .filter { !$0.isEmpty }
+                    completion(.success(lines))
+                } else if let tipsText = data["tips_text"] as? String {
+                    let lines = tipsText
+                        .split(separator: "\n")
+                        .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+                        .filter { !$0.isEmpty }
+                    completion(.success(lines))
                 } else {
                     completion(.success([]))
                 }
@@ -77,7 +96,7 @@ class PythonBridge {
     
     private func executeCommand(_ command: String, arguments: [String], completion: @escaping (Result<[String: Any], Error>) -> Void) {
         let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/python3")
+        task.executableURL = URL(fileURLWithPath: resolvePythonExecutable())
         
         var args = [pythonScript, command]
         args.append(contentsOf: arguments)
@@ -108,6 +127,21 @@ class PythonBridge {
                 }
             }
         }
+    }
+
+    private func resolvePythonExecutable() -> String {
+        let fileManager = FileManager.default
+        let venvPython = URL(fileURLWithPath: projectRoot).appendingPathComponent(".venv/bin/python").path
+
+        if fileManager.fileExists(atPath: venvPython) {
+            return venvPython
+        }
+
+        if fileManager.fileExists(atPath: "/usr/bin/python3") {
+            return "/usr/bin/python3"
+        }
+
+        return "python3"
     }
 }
 
