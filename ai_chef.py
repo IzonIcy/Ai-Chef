@@ -4,12 +4,16 @@ AI Chef - Smart Cooking Assistant
 A command-line application to help you discover recipes, plan meals, and cook smarter.
 """
 
+# ...existing code...
 import os
 try:
     from dotenv import load_dotenv
 except ImportError:
     def load_dotenv():
-        pass
+        return None
+
+load_dotenv()
+# ...existing code...
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -184,7 +188,7 @@ def find_recipes_menu():
     # Find matching recipes
     matches = find_recipes_by_ingredients(ingredients)
     
-    # Apply additional filters
+    # Apply More additional filters
     if max_time or difficulty or dietary:
         filtered_matches = []
         for match in matches:
