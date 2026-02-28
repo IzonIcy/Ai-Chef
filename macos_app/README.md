@@ -29,7 +29,7 @@ This directory contains the native macOS app for AI Chef. The app provides a bea
 If Xcode doesn't auto-detect:
 
 ```bash
-cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef/macos_app
+cd macos_app
 xcodebuild -createBootstrapProject
 ```
 
