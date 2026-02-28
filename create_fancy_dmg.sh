@@ -5,7 +5,7 @@
 
 set -e
 
-PROJECT_DIR="/Users/ryanbahadori/Documents/GitHub/Ai-Chef"
+PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BUILD_DIR="$PROJECT_DIR/build"
 DMG_FILE="$BUILD_DIR/AI-Chef.dmg"
 DMG_TEMP="$BUILD_DIR/dmg_temp_fancy"
@@ -49,7 +49,7 @@ tell application "Finder"
         set position of item "Applications" of container window to {350, 150}
         
         -- Set background (optional)
-        set background picture of the icon view options to file (POSIX file "/Users/ryanbahadori/Documents/GitHub/Ai-Chef/dmg-background.png")
+        set background picture of the icon view options to file (POSIX file "$PROJECT_DIR/dmg-background.png")
     end tell
 end tell
 EOF

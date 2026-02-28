@@ -28,12 +28,12 @@ Your AI Chef project now has a **complete native macOS application** alongside t
 
 ```bash
 # 1. Run setup
-cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+cd /path/to/Ai-Chef
 chmod +x setup_macos_app.sh
 ./setup_macos_app.sh
 
 # 2. Open in Xcode
-open /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+open /path/to/Ai-Chef
 
 # 3. Build & Run
 # Press Cmd+R in Xcode
@@ -273,7 +273,7 @@ You now have:
 ## Ready to Launch! 🚀
 
 ```bash
-cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+cd /path/to/Ai-Chef
 chmod +x setup_macos_app.sh
 ./setup_macos_app.sh
 open .

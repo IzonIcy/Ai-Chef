@@ -18,7 +18,7 @@ The cool part is that both the app and CLI use the same Python backend. Change r
 This is straightforward:
 
 ```bash
-cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+cd /path/to/Ai-Chef
 chmod +x setup_macos_app.sh
 ./setup_macos_app.sh
 ```
@@ -28,7 +28,7 @@ This just checks that you have Python installed and installs the dependencies.
 Then:
 
 ```bash
-open /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+open /path/to/Ai-Chef
 ```
 
 Xcode opens the project. Press **Cmd + R** and it builds and runs the app.

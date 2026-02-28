@@ -25,7 +25,7 @@ BUILD YOUR DMG IN 3 STEPS
 ════════════════════════════════════════════════════════════════════════════
 
 1. Run Build Script
-   cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+   cd /path/to/Ai-Chef
    ./build_dmg.sh
 
 2. Wait (1-3 minutes)
@@ -333,7 +333,7 @@ Ready to go! 🚀
 
 READY? START HERE:
 
-  $ cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+  $ cd /path/to/Ai-Chef
   $ ./build_dmg.sh
 
 Then share build/AI-Chef.dmg however you want!

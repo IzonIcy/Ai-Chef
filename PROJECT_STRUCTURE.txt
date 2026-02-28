@@ -40,12 +40,12 @@ QUICK START
 ═════════════════════════════════════════════════════════════════════════════
 
 1️⃣  RUN SETUP
-   $ cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+   $ cd /path/to/Ai-Chef
    $ chmod +x setup_macos_app.sh
    $ ./setup_macos_app.sh
 
 2️⃣  OPEN IN XCODE
-   $ open /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+   $ open /path/to/Ai-Chef
 
 3️⃣  BUILD & RUN
    Press Cmd+R in Xcode

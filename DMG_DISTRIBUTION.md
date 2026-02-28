@@ -17,7 +17,7 @@ No App Store needed, no code signing certificates required (though optional).
 ### Quick Build
 
 ```bash
-cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+cd /path/to/Ai-Chef
 chmod +x build_dmg.sh
 ./build_dmg.sh
 ```
@@ -35,7 +35,7 @@ This creates: `build/AI-Chef.dmg`
 ### Result
 
 After running `build_dmg.sh`:
-- Location: `/Users/ryanbahadori/Documents/GitHub/Ai-Chef/build/AI-Chef.dmg`
+- Location: `/path/to/Ai-Chef/build/AI-Chef.dmg`
 - Size: ~50-150 MB (depending on Python)
 - Ready to: Share, upload, or email
 

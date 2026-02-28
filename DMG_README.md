@@ -5,7 +5,7 @@ You've got a native macOS app. Now you probably want other people to be able to 
 ## What You Need to Do
 
 ```bash
-cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+cd /path/to/Ai-Chef
 ./build_dmg.sh
 ```
 

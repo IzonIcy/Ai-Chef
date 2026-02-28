@@ -5,7 +5,7 @@ I've successfully created a native macOS app for your AI Chef project while keep
 ## What Was Created
 
 ### 📱 The App
-- **Location**: `/Users/ryanbahadori/Documents/GitHub/Ai-Chef/macos_app/`
+- **Location**: `/path/to/Ai-Chef/macos_app/`
 - **Files**:
   - `AiChef_Updated.swift` - **USE THIS** (full-featured app)
   - `PythonBridge.swift` - Handles Python subprocess communication
@@ -33,14 +33,14 @@ I've successfully created a native macOS app for your AI Chef project while keep
 
 ### Step 1: Run Setup
 ```bash
-cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+cd /path/to/Ai-Chef
 chmod +x setup_macos_app.sh
 ./setup_macos_app.sh
 ```
 
 ### Step 2: Open & Run in Xcode
 ```bash
-open /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+open /path/to/Ai-Chef
 ```
 Then press **Cmd+R** to build and run.
 
@@ -96,7 +96,7 @@ AI-Chef/
 ## Next Steps
 
 1. **Run the setup script** - Handles dependencies
-2. **Open in Xcode** - `open /Users/ryanbahadori/Documents/GitHub/Ai-Chef`
+2. **Open in Xcode** - `open /path/to/Ai-Chef`
 3. **Build & Run** - Press Cmd+R
 4. **Try the features** - Search recipes, generate, plan meals
 5. **Read the guides** - Check `MACOS_APP_GUIDE.md` for advanced setup

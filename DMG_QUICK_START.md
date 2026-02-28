@@ -7,7 +7,7 @@ So you want to get this app out to people without dealing with the App Store. Sm
 Run this:
 
 ```bash
-cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+cd /path/to/Ai-Chef
 ./build_dmg.sh
 ```
 

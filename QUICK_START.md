@@ -3,7 +3,7 @@
 ## Installation (First Time)
 
 ```bash
-cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+cd /path/to/Ai-Chef
 chmod +x setup_macos_app.sh
 ./setup_macos_app.sh
 ```
@@ -11,7 +11,7 @@ chmod +x setup_macos_app.sh
 ## Opening the App
 
 ```bash
-open /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+open /path/to/Ai-Chef
 # Then press Cmd+R in Xcode to build & run
 ```
 
@@ -59,7 +59,7 @@ Or use Finder:
 ### App won't build
 ```bash
 # Clean and rebuild
-cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+cd /path/to/Ai-Chef
 xcodebuild clean
 xcodebuild build
 ```
@@ -95,7 +95,7 @@ python3 app_bridge.py generate_recipe "pasta"
 ## Build Distribution Version
 
 ```bash
-cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+cd /path/to/Ai-Chef
 
 # Create .app bundle
 xcodebuild build -scheme AiChef

@@ -5,7 +5,7 @@
 
 set -e
 
-PROJECT_DIR="/Users/ryanbahadori/Documents/GitHub/Ai-Chef"
+PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_NAME="AI Chef"
 BUNDLE_ID="com.aichef.app"
 

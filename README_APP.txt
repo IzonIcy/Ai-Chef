@@ -16,7 +16,7 @@ The macOS app adds a native interface while keeping your original Python project
 From the repository root:
 
 ```bash
-cd /Users/ryanbahadori/Documents/GitHub/Ai-Chef
+cd /path/to/Ai-Chef
 chmod +x setup_macos_app.sh
 ./setup_macos_app.sh
 open .
