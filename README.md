@@ -1,128 +1,48 @@
-# AI Chef 🍳
+AI Chef 🍳
 
-So basically I got tired of staring at my fridge wondering what to make for dinner, and thought - why not build something to help with that? AI Chef is my attempt at making a cooking assistant that actually helps you figure out what to cook based on what you already have.
+I got tired of standing in front of my fridge every night thinking, “What am I supposed to make with this?” So instead of continuing to guess, I built something to solve the problem.
 
-The idea is pretty simple: you tell it what ingredients you've got, and it suggests recipes. Or if you're feeling adventurous, you can use AI to generate completely custom recipes. There's also meal planning stuff because I always forget to plan ahead.
+AI Chef is a simple cooking assistant that helps you figure out what to make based on the ingredients you already have. The goal is to waste less food, save money, and stop spending 30 minutes deciding what to eat.
 
-## What it does
+It started as a small side project… and turned into something I actually use all the time.
 
-- Finds recipes based on whatever ingredients you have lying around
-- Generates custom recipes with AI (when you want something specific)
-- Helps you plan out your meals for the week
-- Makes grocery lists so you don't forget half the stuff at the store
-- Filters recipes by time, difficulty, dietary restrictions, etc.
-- Lets you save your favorite recipes
+What It Can Do
 
-## Why I made this
+Suggest recipes based on ingredients you already have
 
-Honestly? I was wasting so much food and money because I'd buy ingredients without a plan. This helps me actually use what I have, try new things, and not spend 30 minutes every night deciding what to eat. Plus it was a fun way to learn more about working with AI APIs.
+Generate completely custom recipes using AI
 
-## Getting Started
+Help plan your meals for the week
 
-### Option 1: Download the macOS App (.dmg)
+Automatically create grocery lists
 
-If you're on macOS and just want to use the app without any setup:
+Filter recipes by time, difficulty, dietary restrictions, etc.
 
-1. Download the latest `AI-Chef.dmg` file from the [Releases](https://github.com/yourusername/Ai-Chef/releases) page
-2. Open the `.dmg` file (double-click it)
-3. Drag the **AI Chef** app icon to the **Applications** folder
-4. Open Applications and launch **AI Chef**
+Save your favorite recipes
 
-That's it! The app is ready to use. For AI recipe generation, you'll still need to set your OpenAI API key when you first run it.
+Why I Built It
 
-### Option 2: Command Line (CLI)
+Honestly, I was wasting way too much food.
 
-If you prefer the terminal version or want to develop/customize it:
+I’d buy random ingredients with no real plan, forget about them, and then end up ordering takeout. I wanted something that could look at what I already had and tell me what I could actually make.
 
-You'll need Python 3.8 or newer installed. For the AI features, you'll also need an OpenAI API key (but the app still works without it - you just won't be able to generate custom recipes).
+It also gave me a fun excuse to work with AI APIs and build something practical instead of just experimental.
 
-Clone this repo:
-```bash
-git clone https://github.com/yourusername/Ai-Chef.git
-cd Ai-Chef
-```
+Getting Started
+Option 1: macOS App (.dmg)
 
-Install the required packages:
-```bash
-pip install -r requirements.txt
-```
+If you’re on macOS and just want to use it without setting anything up:
 
-If you want to use the AI recipe generator, create a `.env` file and add your OpenAI API key:
-```
-OPENAI_API_KEY=your-api-key-here
-```
+Download the latest AI-Chef.dmg from the Releases page
 
-(You can also just export it as an environment variable if you prefer)
+Open the file
 
-Running it:
-```bash
-python ai_chef.py
-```
+Drag AI Chef into your Applications folder
 
-The interface is pretty self-explanatory - it'll walk you through the options.
+Launch it
 
-## How it looks
+That’s it.
 
-When you run it, you get a menu like this:
+If you want AI-generated recipes, you’ll just need to add your OpenAI API key when prompted.
 
-```
-Welcome to AI Chef! 🍳
-
-What would you like to do?
-1. Find recipes by ingredients
-2. Generate a custom recipe with AI
-3. Plan my weekly meals
-4. View saved recipes
-5. Exit
-
-> 1
-
-Enter ingredients you have (comma-separated): chicken, rice, broccoli
-
-Found 3 recipes matching your ingredients:
-- Chicken Stir-Fry with Broccoli
-- Garlic Chicken and Rice
-- One-Pan Chicken Broccoli Rice
-```
-
-Pretty straightforward stuff.
-
-## Tech used
-
-- Python 3.8+
-- OpenAI API (for the AI recipe generation)
-- Rich library (makes the terminal output look nice)
-- python-dotenv (for managing the API key)
-
-## Features breakdown
-
-**Recipe Finder** - Type in what ingredients you have and it'll match them against a database of recipes. Shows you what percentage of ingredients you have and what you're missing.
-
-**AI Recipe Generator** - This is the cool part. You can describe what you want (like "something spicy with shrimp" or "a quick vegetarian dinner") and it'll generate a complete recipe for you using GPT.
-
-**Meal Planning** - Creates a weekly meal plan for you. You can filter by dietary preferences and cooking time. Then it'll generate a grocery list of everything you need.
-
-**Filters** - Search by cooking time, difficulty, dietary stuff (vegan, gluten-free, etc.), or cuisine type.
-
-The app saves your favorite recipes and meal plans to JSON files so they stick around between sessions.
-
-## Contributing
-
-If you want to add features or fix bugs, feel free to open a PR. Would love to see what others come up with!
-
-Some ideas I had but haven't gotten to yet:
-- Saving custom recipes to the database
-- Nutritional information for recipes
-- Shopping list export to different formats
-- More recipes in the database
-- Possibly Making A App For Mac?
-
-## License
-
-MIT License - If your showing it to someone, please tell them that i made this.
-
-## Notes
-
-Built this as a side project to solve a real problem I was having. My friend helped me come up with the initial concept. If you have suggestions or find bugs, let me know!
-
-The recipe database currently has about 10 recipes built in, but the AI generator can create unlimited new ones if you have an API key.
+If you show this to someone, please credit me — I built this to solve a real problem I was having.
