@@ -30,6 +30,32 @@ If you're on macOS and just want to use the app without any setup:
 
 That's it! The app is ready to use. For AI recipe generation, you'll still need to set your OpenAI API key when you first run it.
 
+### Option 1.5: Build a DMG yourself (No Xcode required)
+
+If you want to make your own shareable `.dmg` but don't have Xcode installed, you can still do it.
+
+From the project folder, run:
+
+```bash
+./build_no_xcode_dmg.sh
+```
+
+That creates:
+
+```bash
+build_no_xcode/AI-Chef-No-Xcode.dmg
+```
+
+Inside that DMG, there's an `AI Chef.command` launcher. People can double-click it and the app will:
+
+- set up a local virtual environment automatically
+- install dependencies on first run
+- launch AI Chef
+
+Important note: end users still need `python3` installed on their Mac, but they do **not** need Xcode.
+
+If macOS blocks the launcher the first time, right-click `AI Chef.command` and choose **Open**.
+
 ### Option 2: Command Line (CLI)
 
 If you prefer the terminal version or want to develop/customize it:

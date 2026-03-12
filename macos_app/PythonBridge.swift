@@ -9,8 +9,20 @@ class PythonBridge {
         return filePath.deletingLastPathComponent().deletingLastPathComponent().path
     }()
 
-    private lazy var pythonScript: String = {
-        return URL(fileURLWithPath: projectRoot).appendingPathComponent("app_bridge.py").path
+    /// Prefer bundled script inside the app, then fallback to source tree path for local development.
+    private lazy var pythonScriptURL: URL = {
+        if let bundledPythonDir = Bundle.main.resourceURL?.appendingPathComponent("python", isDirectory: true) {
+            let bundledScript = bundledPythonDir.appendingPathComponent("app_bridge.py")
+            if FileManager.default.fileExists(atPath: bundledScript.path) {
+                return bundledScript
+            }
+        }
+
+        if let bundledRootScript = Bundle.main.url(forResource: "app_bridge", withExtension: "py") {
+            return bundledRootScript
+        }
+
+        return URL(fileURLWithPath: projectRoot).appendingPathComponent("app_bridge.py")
     }()
     
     /// Find recipes based on ingredients
@@ -97,8 +109,9 @@ class PythonBridge {
     private func executeCommand(_ command: String, arguments: [String], completion: @escaping (Result<[String: Any], Error>) -> Void) {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: resolvePythonExecutable())
+        task.currentDirectoryURL = pythonScriptURL.deletingLastPathComponent()
         
-        var args = [pythonScript, command]
+        var args = [pythonScriptURL.path, command]
         args.append(contentsOf: arguments)
         task.arguments = args
         

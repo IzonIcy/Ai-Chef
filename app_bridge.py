@@ -12,8 +12,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from recipes import find_recipes_by_ingredients, RECIPE_DATABASE
-from ai_generator import generate_recipe_with_ai, get_cooking_tips
 from meal_planner import MealPlanner, SavedRecipes
+
+AI_IMPORT_ERROR = None
+try:
+    from ai_generator import generate_recipe_with_ai, get_cooking_tips
+except Exception as exc:
+    AI_IMPORT_ERROR = str(exc)
+    generate_recipe_with_ai = None
+    get_cooking_tips = None
 
 
 def find_recipes_by_ingredients_api(ingredients: list) -> dict:
@@ -57,6 +64,14 @@ def generate_recipe_api(prompt: str = None, ingredients: list = None, dietary_pr
     Returns:
         Dictionary with generated recipe
     """
+    if generate_recipe_with_ai is None:
+        return {
+            "status": "error",
+            "message": "AI recipe generation is unavailable on this installation.",
+            "details": AI_IMPORT_ERROR,
+            "recipe": None
+        }
+
     try:
         recipe = generate_recipe_with_ai(
             ingredients=ingredients,
@@ -88,6 +103,14 @@ def get_cooking_tips_api(recipe_name: str) -> dict:
     Returns:
         Dictionary with tips
     """
+    if get_cooking_tips is None:
+        return {
+            "status": "error",
+            "message": "AI cooking tips are unavailable on this installation.",
+            "details": AI_IMPORT_ERROR,
+            "tips": []
+        }
+
     try:
         tips = get_cooking_tips(recipe_name)
         tips_list = [line.strip("- •\t") for line in str(tips).splitlines() if line.strip()]

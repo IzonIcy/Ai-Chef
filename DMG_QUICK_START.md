@@ -13,6 +13,27 @@ cd /path/to/Ai-Chef
 
 Grab a coffee. When it's done (couple minutes), you've got `build/AI-Chef.dmg`.
 
+## No Xcode Option
+
+If you (or your users) do not have Xcode, use this instead:
+
+```bash
+cd /path/to/Ai-Chef
+./build_no_xcode_dmg.sh
+```
+
+This creates `build_no_xcode/AI-Chef-No-Xcode.dmg`.
+
+What is inside:
+- `AI Chef.command` launcher (double-click to run)
+- bundled Python source files
+- first-run auto setup for a local virtual environment
+
+Requirements for end users:
+- Python 3 installed
+
+This path does not require Xcode and is intended for personal/self-use distribution.
+
 ## Sharing It
 
 Put it wherever you want:

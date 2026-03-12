@@ -47,6 +47,30 @@ fi
 
 echo "✓ App built successfully"
 
+# Step 2.5: Bundle Python backend files into the app resources
+echo ""
+echo -e "${BLUE}Step 2.5: Bundling Python backend files...${NC}"
+PYTHON_BUNDLE_DIR="$APP_PATH/Contents/Resources/python"
+mkdir -p "$PYTHON_BUNDLE_DIR"
+
+PYTHON_FILES=(
+    "app_bridge.py"
+    "recipes.py"
+    "ai_generator.py"
+    "meal_planner.py"
+    "gamification.py"
+)
+
+for file in "${PYTHON_FILES[@]}"; do
+    if [ -f "$PROJECT_DIR/$file" ]; then
+        cp "$PROJECT_DIR/$file" "$PYTHON_BUNDLE_DIR/$file"
+    else
+        echo "⚠️  Warning: Missing Python backend file: $file"
+    fi
+done
+
+echo "✓ Python backend files copied to app bundle"
+
 # Step 3: Create DMG structure
 echo ""
 echo -e "${BLUE}Step 3: Creating .dmg file...${NC}"
