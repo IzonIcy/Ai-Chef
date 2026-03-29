@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI Chef - Smart Cooking Assistant
-A command-line application to help you discover recipes, plan meals, and cook smarter.
+A command-line based application to help you discover recipes, plan meals, and to cook smarter
 """
 
 # ...existing code...
