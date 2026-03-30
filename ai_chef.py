@@ -4,7 +4,6 @@ AI Chef - Smart Cooking Assistant
 A command-line based application to help you discover recipes, plan meals, and to cook smarter
 """
 
-# ...existing code...
 import os
 try:
     from dotenv import load_dotenv
