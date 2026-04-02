@@ -19,18 +19,7 @@ Honestly? I was wasting so much food and money because I'd buy ingredients witho
 
 ## Getting Started
 
-### Option 1: Download the macOS App (.dmg)
-
-If you're on macOS and just want to use the app without any setup:
-
-1. Download the latest `AI-Chef.dmg` file from the [Releases](https://github.com/yourusername/Ai-Chef/releases) page
-2. Open the `.dmg` file (double-click it)
-3. Drag the **AI Chef** app icon to the **Applications** folder
-4. Open Applications and launch **AI Chef**
-
-That's it! The app is ready to use. For AI recipe generation, you'll still need to set your OpenAI API key when you first run it.
-
-### Option 1.5: Build a DMG yourself (No Xcode required)
+### Option 1: Build a DMG yourself (No Xcode required)
 
 If you want to make your own shareable `.dmg` but don't have Xcode installed, you can still do it.
 
