@@ -38,6 +38,10 @@ wheels/
 .DS_Store
 Thumbs.db
 
-# Project specific
+# Project specific - user-generated data files
 saved_recipes.json
 meal_plans.json
+cooking_streak.json
+achievements.json
+weekly_challenges.json
+pantry_inventory.json

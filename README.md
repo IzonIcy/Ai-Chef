@@ -19,36 +19,6 @@ Honestly? I was wasting so much food and money because I'd buy ingredients witho
 
 ## Getting Started
 
-### Option 1: Build a DMG yourself (No Xcode required)
-
-If you want to make your own shareable `.dmg` but don't have Xcode installed, you can still do it.
-
-From the project folder, run:
-
-```bash
-./build_no_xcode_dmg.sh
-```
-
-That creates:
-
-```bash
-build_no_xcode/AI-Chef-No-Xcode.dmg
-```
-
-Inside that DMG, there's an `AI Chef.command` launcher. People can double-click it and the app will:
-
-- set up a local virtual environment automatically
-- install dependencies on first run
-- launch AI Chef
-
-Important note: end users still need `python3` installed on their Mac, but they do **not** need Xcode.
-
-If macOS blocks the launcher the first time, right-click `AI Chef.command` and choose **Open**.
-
-### Option 2: Command Line (CLI)
-
-If you prefer the terminal version or want to develop/customize it:
-
 You'll need Python 3.8 or newer installed. For the AI features, you'll also need an OpenAI API key (but the app still works without it - you just won't be able to generate custom recipes).
 
 Clone this repo:
@@ -71,7 +41,7 @@ OPENAI_API_KEY=your-api-key-here
 
 Running it:
 ```bash
-python ai_chef.py
+python ai_chef.py or python3 ai_chef.py
 ```
 
 The interface is pretty self-explanatory - it'll walk you through the options.
@@ -130,14 +100,15 @@ Some ideas I had but haven't gotten to yet:
 - Nutritional information for recipes
 - Shopping list export to different formats
 - More recipes in the database
-- Possibly Making A App For Mac?
 
 ## License
 
-MIT License - If your showing it to someone, please tell them that i made this.
+If your showing it to someone, please tell them that i made this.
 
 ## Notes
 
-Built this as a side project to solve a real problem I was having. My friend helped me come up with the initial concept. If you have suggestions or find bugs, let me know!
+Built this as a side project to solve a real problem I was having. If you have suggestions or find bugs, let me know!
 
 The recipe database currently has about 10 recipes built in, but the AI generator can create unlimited new ones if you have an API key.
+
+The Ai (copilot) was used to make the README.md and sure there were no bugs and if there were bugs, co pilot fixed those bugs and made sure everything was good and up to date!
