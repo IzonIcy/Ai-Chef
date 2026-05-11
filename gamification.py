@@ -11,11 +11,11 @@ from typing import List, Dict, Optional
 
 class CookingStreak:
     """Track user's cooking streak."""
-    
+
     def __init__(self, filename="cooking_streak.json"):
         self.filename = filename
         self.data = self.load_streak()
-    
+
     def load_streak(self):
         """Load streak data from file."""
         if os.path.exists(self.filename):
@@ -25,7 +25,7 @@ class CookingStreak:
             except (json.JSONDecodeError, IOError):
                 return self._default_data()
         return self._default_data()
-    
+
     def _default_data(self):
         """Return default streak data structure."""
         return {
@@ -38,19 +38,19 @@ class CookingStreak:
             "vegan_meals": 0,
             "cuisine_counts": {}
         }
-    
+
     def save_streak(self):
         """Save streak data to file."""
         with open(self.filename, 'w') as f:
             json.dump(self.data, f, indent=2)
-    
-    def record_meal_cooked(self, cuisine: str = None, cooking_time: int = None, is_vegetarian: bool = False, is_vegan: bool = False):
+
+    def record_meal_cooked(self, cuisine: Optional[str] = None, cooking_time: Optional[int] = None, is_vegetarian: bool = False, is_vegan: bool = False):
         """Record that a meal was cooked today."""
         today = datetime.now().date().isoformat()
         last_date = self.data.get("last_cooked_date")
-        
+
         self.data["total_meals_cooked"] += 1
-        
+
         if last_date is None:
             # First meal ever
             self.data["current_streak"] = 1
@@ -59,7 +59,7 @@ class CookingStreak:
             last_cooked = datetime.fromisoformat(last_date).date()
             today_date = datetime.now().date()
             days_diff = (today_date - last_cooked).days
-            
+
             if days_diff == 0:
                 # Already cooked today, don't increment streak
                 pass
@@ -71,7 +71,7 @@ class CookingStreak:
                 # Streak broken, reset
                 self.data["current_streak"] = 1
                 self.data["last_cooked_date"] = today
-        
+
         # Update longest streak if needed
         if self.data["current_streak"] > self.data.get("longest_streak", 0):
             self.data["longest_streak"] = self.data["current_streak"]
@@ -91,9 +91,9 @@ class CookingStreak:
             counts = self.data.get("cuisine_counts", {})
             counts[cuisine_key] = counts.get(cuisine_key, 0) + 1
             self.data["cuisine_counts"] = counts
-        
+
         self.save_streak()
-    
+
     def get_streak_info(self):
         """Get current streak information."""
         return {
@@ -105,7 +105,7 @@ class CookingStreak:
 
 class Achievement:
     """Represents a single achievement/badge."""
-    
+
     def __init__(self, id: str, name: str, description: str, icon: str, unlocked: bool = False, unlock_date: Optional[str] = None):
         self.id = id
         self.name = name
@@ -113,7 +113,7 @@ class Achievement:
         self.icon = icon
         self.unlocked = unlocked
         self.unlock_date = unlock_date
-    
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -127,7 +127,7 @@ class Achievement:
 
 class AchievementTracker:
     """Track user achievements and badges."""
-    
+
     # Define all possible achievements
     ACHIEVEMENTS = {
         "first_recipe": Achievement(
@@ -197,11 +197,11 @@ class AchievementTracker:
             "🔥"
         ),
     }
-    
+
     def __init__(self, filename="achievements.json"):
         self.filename = filename
         self.achievements = self.load_achievements()
-    
+
     def load_achievements(self):
         """Load achievements from file."""
         if os.path.exists(self.filename):
@@ -212,17 +212,17 @@ class AchievementTracker:
             except (json.JSONDecodeError, IOError):
                 return self._default_achievements()
         return self._default_achievements()
-    
+
     def _default_achievements(self):
         """Return all achievements in unlocked=False state."""
         return {aid: Achievement(**a.to_dict()) for aid, a in self.ACHIEVEMENTS.items()}
-    
+
     def save_achievements(self):
         """Save achievements to file."""
         data = {aid: a.to_dict() for aid, a in self.achievements.items()}
         with open(self.filename, 'w') as f:
             json.dump(data, f, indent=2)
-    
+
     def unlock_achievement(self, achievement_id: str) -> bool:
         """Unlock an achievement if it exists and isn't already unlocked."""
         if achievement_id in self.achievements and not self.achievements[achievement_id].unlocked:
@@ -231,11 +231,11 @@ class AchievementTracker:
             self.save_achievements()
             return True
         return False
-    
+
     def get_unlocked_achievements(self) -> List[Achievement]:
         """Get all unlocked achievements."""
         return [a for a in self.achievements.values() if a.unlocked]
-    
+
     def get_locked_achievements(self) -> List[Achievement]:
         """Get all locked achievements."""
         return [a for a in self.achievements.values() if not a.unlocked]
@@ -243,7 +243,7 @@ class AchievementTracker:
 
 class WeeklyChallenges:
     """Manage weekly cooking challenges."""
-    
+
     CHALLENGES = [
         {
             "id": "cook_five",
@@ -267,11 +267,11 @@ class WeeklyChallenges:
             "reward": "35 points"
         },
     ]
-    
+
     def __init__(self, filename="weekly_challenges.json"):
         self.filename = filename
         self.challenges = self.load_challenges()
-    
+
     def load_challenges(self):
         """Load weekly challenges from file."""
         if os.path.exists(self.filename):
@@ -281,7 +281,7 @@ class WeeklyChallenges:
             except (json.JSONDecodeError, IOError):
                 return self._reset_challenges()
         return self._reset_challenges()
-    
+
     def _reset_challenges(self):
         """Reset challenges for the week."""
         week_start = self._get_week_start()
@@ -296,25 +296,25 @@ class WeeklyChallenges:
                 for challenge in self.CHALLENGES
             ]
         }
-    
+
     def _get_week_start(self):
         """Get the start date of the current week (Monday)."""
         today = datetime.now().date()
         week_start = today - timedelta(days=today.weekday())
         return week_start.isoformat()
-    
+
     def save_challenges(self):
         """Save challenges to file."""
         with open(self.filename, 'w') as f:
             json.dump(self.challenges, f, indent=2)
-    
+
     def check_week_reset(self):
         """Check if a new week has started and reset if needed."""
         current_week_start = self._get_week_start()
         if self.challenges.get("week_start") != current_week_start:
             self.challenges = self._reset_challenges()
             self.save_challenges()
-    
+
     def update_challenge_progress(self, challenge_id: str, increment: int = 1):
         """Update progress on a challenge."""
         self.check_week_reset()
@@ -325,16 +325,16 @@ class WeeklyChallenges:
                     challenge["completed"] = True
                 self.save_challenges()
                 break
-    
+
     def get_active_challenges(self):
         """Get all active challenges for this week."""
         self.check_week_reset()
         return self.challenges["challenges"]
-    
+
     def get_completed_challenges(self):
         """Get completed challenges for this week."""
         return [c for c in self.get_active_challenges() if c["completed"]]
-    
+
     def get_progress_percent(self, challenge_id: str) -> int:
         """Get progress percentage for a challenge."""
         for challenge in self.get_active_challenges():
@@ -347,16 +347,16 @@ class WeeklyChallenges:
 
 class GamificationManager:
     """Central manager for all gamification features."""
-    
+
     def __init__(self):
         self.streak = CookingStreak()
         self.achievements = AchievementTracker()
         self.challenges = WeeklyChallenges()
-    
-    def record_recipe_cooked(self, recipe_name: str, cuisine: str = None, cooking_time: int = None, is_vegetarian: bool = False, is_vegan: bool = False):
+
+    def record_recipe_cooked(self, recipe_name: str, cuisine: Optional[str] = None, cooking_time: Optional[int] = None, is_vegetarian: bool = False, is_vegan: bool = False):
         """
         Record that a recipe was cooked and update all gamification systems.
-        
+
         Args:
             recipe_name: Name of the recipe cooked
             cuisine: Cuisine type (e.g., 'Italian', 'Asian')
@@ -371,15 +371,15 @@ class GamificationManager:
             is_vegetarian=is_vegetarian,
             is_vegan=is_vegan
         )
-        
+
         # Unlock achievements
         streak_info = self.streak.get_streak_info()
         if streak_info["total_meals"] == 1:
             self.achievements.unlock_achievement("first_recipe")
-        
+
         if streak_info["current_streak"] >= 7:
             self.achievements.unlock_achievement("week_warrior")
-        
+
         if streak_info["total_meals"] >= 10:
             self.achievements.unlock_achievement("gourmet_chef")
         if streak_info["total_meals"] >= 25:
@@ -410,7 +410,7 @@ class GamificationManager:
 
         if quick_meals >= 5:
             self.achievements.unlock_achievement("speed_cook")
-        
+
         if is_vegetarian or is_vegan:
             self.challenges.update_challenge_progress("healthy_week")
 
@@ -418,10 +418,10 @@ class GamificationManager:
             cuisine_key = cuisine.strip().lower()
             if cuisine_counts.get(cuisine_key, 0) == 1:
                 self.challenges.update_challenge_progress("try_new_cuisine")
-        
+
         # Update weekly challenges
         self.challenges.update_challenge_progress("cook_five")
-    
+
     def get_gamification_status(self):
         """Get complete gamification status."""
         return {

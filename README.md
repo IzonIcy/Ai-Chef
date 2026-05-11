@@ -1,6 +1,6 @@
 # AI Chef 🍳
 
-So basically I got tired of staring at my fridge wondering what to make for dinner, and thought - why not build something to help with that? AI Chef is my attempt at making a cooking assistant that actually helps you figure out what to cook based on what you already have.
+So basically I got tired of staring at my fridge wondering what to make for dinner, and thought, why not build something to help with that? AI Chef is my attempt at making a cooking assistant that actually helps you figure out what to cook based on what you already have.
 
 The idea is pretty simple: you tell it what ingredients you've got, and it suggests recipes. Or if you're feeling adventurous, you can use AI to generate completely custom recipes. There's also meal planning stuff because I always forget to plan ahead.
 

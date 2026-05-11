@@ -6,13 +6,13 @@ A command-line based application to help you discover recipes, plan meals, and t
 
 import os
 try:
-    from dotenv import load_dotenv
+    from dotenv import load_dotenv  # pyright: ignore[reportAssignmentType]
 except ImportError:
     def load_dotenv():
         return None
 
 load_dotenv()
-# ...existing code...
+
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -22,8 +22,8 @@ from rich.markdown import Markdown
 from rich import box
 
 from recipes import (
-    find_recipes_by_ingredients, 
-    filter_recipes, 
+    find_recipes_by_ingredients,
+    filter_recipes,
     get_recipe_by_name,
     RECIPE_DATABASE
 )
@@ -66,17 +66,17 @@ def display_gamification_status():
     streak = status["streak"]
     achievements = status["achievements"]
     challenges = status["challenges"]
-    
+
     # Display streak
     console.print(f"\n[bold yellow]🔥 Your Streak: {streak['current_streak']} days[/bold yellow]")
     console.print(f"[dim]Longest streak: {streak['longest_streak']} days | Total meals: {streak['total_meals']}[/dim]")
-    
+
     # Display achievements
     if achievements["unlocked"]:
         console.print(f"\n[bold green]🏆 Achievements Unlocked ({len(achievements['unlocked'])}):[/bold green]")
         for achievement in achievements["unlocked"]:
             console.print(f"  {achievement['icon']} {achievement['name']} - {achievement['description']}")
-    
+
     # Display weekly challenges
     console.print(f"\n[bold cyan]🎯 This Week's Challenges:[/bold cyan]")
     for challenge in challenges:
@@ -85,7 +85,7 @@ def display_gamification_status():
         percent = int((min(progress, target) / target) * 100)
         bar_filled = int(percent / 10)
         bar = "█" * bar_filled + "░" * (10 - bar_filled)
-        
+
         status_icon = "✓" if challenge["completed"] else " "
         console.print(f"  [{status_icon}] {challenge['name']}")
         console.print(f"      [{bar}] {progress}/{target} - {challenge['reward']}")
@@ -94,12 +94,12 @@ def display_gamification_status():
 def display_achievements_menu():
     """Display achievements and badges."""
     console.print("\n[bold yellow]🏆 Achievements & Badges[/bold yellow]\n")
-    
+
     status = gamification.get_gamification_status()
     achievements = status["achievements"]
     unlocked = achievements["unlocked"]
     locked = achievements["locked"]
-    
+
     # Display unlocked achievements
     if unlocked:
         console.print(f"[bold green]Unlocked ({len(unlocked)})[/bold green]\n")
@@ -107,7 +107,7 @@ def display_achievements_menu():
         table.add_column("Icon", style="yellow", width=5)
         table.add_column("Achievement")
         table.add_column("Date Unlocked", style="dim")
-        
+
         for achievement in unlocked:
             table.add_row(
                 achievement['icon'],
@@ -115,21 +115,21 @@ def display_achievements_menu():
                 achievement.get('unlock_date', 'N/A')[:10]
             )
         console.print(table)
-    
+
     # Display locked achievements
     if locked:
         console.print(f"\n[bold cyan]Locked ({len(locked)})[/bold cyan]\n")
         table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
         table.add_column("Icon", style="dim", width=5)
         table.add_column("Achievement", style="dim")
-        
+
         for achievement in locked:
             table.add_row(
                 achievement['icon'],
                 f"{achievement['name']}\n{achievement['description']}"
             )
         console.print(table)
-    
+
     console.print("\n[dim]Keep cooking to unlock more achievements![/dim]")
 
 
@@ -142,38 +142,38 @@ def display_recipe(recipe):
     info_table = Table(show_header=False, box=box.SIMPLE)
     info_table.add_column("Property", style="cyan")
     info_table.add_column("Value", style="white")
-    
+
     info_table.add_row("⏱️  Cook Time", f"{recipe.get('cook_time', 'N/A')} minutes")
     info_table.add_row("👨‍🍳 Difficulty", recipe.get('difficulty', 'N/A').title())
     info_table.add_row("🍽️  Servings", str(recipe.get('servings', 'N/A')))
     info_table.add_row("🌍 Cuisine", recipe.get('cuisine', 'N/A'))
-    
+
     if recipe.get('dietary'):
         dietary_str = ", ".join(recipe['dietary'])
         info_table.add_row("🥗 Dietary", dietary_str.title())
-    
+
     console.print(info_table)
-    
+
     # Ingredients
     console.print("\n[bold green]Ingredients:[/bold green]")
     for ingredient in recipe.get('ingredients', []):
         console.print(f"  • {ingredient}")
-    
+
     # Instructions
     console.print("\n[bold green]Instructions:[/bold green]")
     for i, instruction in enumerate(recipe.get('instructions', []), 1):
         console.print(f"  {i}. {instruction}")
-    
+
     console.print(f"\n[bold cyan]{'='*60}[/bold cyan]\n")
 
 
 def find_recipes_menu():
     """Menu for finding recipes by ingredients."""
     console.print("\n[bold yellow]🔍 Find Recipes by Ingredients[/bold yellow]\n")
-    
+
     ingredients_input = Prompt.ask("Enter ingredients you have (comma-separated)")
     ingredients = [ing.strip() for ing in ingredients_input.split(',')]
-    
+
     # Optional filters
     console.print("\n[dim]Optional filters (press Enter to skip):[/dim]")
     max_time = Prompt.ask("Maximum cook time (minutes)", default="")
@@ -183,35 +183,35 @@ def find_recipes_menu():
 
     difficulty = Prompt.ask("Difficulty level (easy/medium/hard)", default="")
     dietary = Prompt.ask("Dietary preference (vegetarian/vegan/gluten-free)", default="")
-    
+
     # Find matching recipes
     matches = find_recipes_by_ingredients(ingredients)
-    
+
     # Apply More additional filters
     if max_time or difficulty or dietary:
         filtered_matches = []
         for match in matches:
             recipe = match["recipe"]
             passes = True
-            
+
             if max_time_int is not None and recipe["cook_time"] > max_time_int:
                 passes = False
             if difficulty and recipe["difficulty"].lower() != difficulty.lower():
                 passes = False
             if dietary and dietary.lower() not in [d.lower() for d in recipe["dietary"]]:
                 passes = False
-            
+
             if passes:
                 filtered_matches.append(match)
         matches = filtered_matches
-    
+
     if not matches:
         console.print("\n[red]No recipes found matching your criteria.[/red]")
         return
-    
+
     # Display results
     console.print(f"\n[bold green]Found {len(matches)} recipe(s):[/bold green]\n")
-    
+
     results_table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
     results_table.add_column("#", style="dim", width=3)
     results_table.add_column("Recipe Name", style="yellow")
@@ -219,12 +219,12 @@ def find_recipes_menu():
     results_table.add_column("Cook Time", justify="center")
     results_table.add_column("Difficulty", justify="center")
     results_table.add_column("Missing", style="dim")
-    
+
     for idx, match in enumerate(matches[:10], 1):  # Show top 10
         recipe = match["recipe"]
         match_pct = f"{match['match_percentage']*100:.0f}%"
         missing = f"{match['missing_count']} items"
-        
+
         results_table.add_row(
             str(idx),
             recipe["name"],
@@ -233,9 +233,9 @@ def find_recipes_menu():
             recipe["difficulty"],
             missing
         )
-    
+
     console.print(results_table)
-    
+
     # Let user view a recipe
     if Confirm.ask("\nWould you like to view a recipe in detail?"):
         choice = Prompt.ask("Enter recipe number")
@@ -244,7 +244,7 @@ def find_recipes_menu():
             if 0 <= idx < len(matches):
                 recipe = matches[idx]["recipe"]
                 display_recipe(recipe)
-                
+
                 # Option to save
                 if Confirm.ask("Save this recipe to favorites?"):
                     saved_recipes = SavedRecipes()
@@ -270,29 +270,29 @@ def find_recipes_menu():
 def ai_recipe_menu():
     """Menu for generating recipes with AI."""
     console.print("\n[bold yellow]🤖 Generate Custom Recipe with AI[/bold yellow]\n")
-    
+
     # Check if API key is set
     if not os.getenv("OPENAI_API_KEY"):
         console.print("[red]Error: OPENAI_API_KEY not found in environment.[/red]")
         console.print("[yellow]Please set your API key in a .env file or environment variable.[/yellow]")
         return
-    
+
     console.print("[dim]Tell me what you'd like to cook (or press Enter for custom options):[/dim]")
     description = Prompt.ask("Recipe description", default="")
-    
+
     ingredients = None
     dietary = None
     cuisine = None
     cook_time = None
     difficulty = None
-    
+
     if not description or Confirm.ask("\nWould you like to specify more options?"):
         console.print("\n[dim]Optional parameters (press Enter to skip):[/dim]")
-        
+
         ing_input = Prompt.ask("Ingredients to use (comma-separated)", default="")
         if ing_input:
             ingredients = [i.strip() for i in ing_input.split(',')]
-        
+
         dietary = Prompt.ask("Dietary preference", default="")
         cuisine = Prompt.ask("Cuisine type", default="")
         time_input = Prompt.ask("Max cook time (minutes)", default="")
@@ -302,9 +302,9 @@ def ai_recipe_menu():
         else:
             cook_time = parsed_time
         difficulty = Prompt.ask("Difficulty level", default="")
-    
+
     console.print("\n[cyan]🧠 Generating your custom recipe with AI...[/cyan]\n")
-    
+
     # Generate recipe
     recipe = generate_recipe_with_ai(
         ingredients=ingredients,
@@ -314,16 +314,16 @@ def ai_recipe_menu():
         difficulty=difficulty,
         description=description
     )
-    
+
     if "error" in recipe:
         console.print(f"[red]Error: {recipe['error']}[/red]")
         if "suggestion" in recipe:
             console.print(f"[yellow]{recipe['suggestion']}[/yellow]")
         return
-    
+
     # Display the generated recipe
     display_recipe(recipe)
-    
+
     # Option to save
     if Confirm.ask("Save this AI-generated recipe?"):
         saved_recipes = SavedRecipes()
@@ -355,7 +355,7 @@ def ai_cooking_tips_menu():
     dietary_value = dietary_preferences if dietary_preferences else None
 
     console.print("\n[cyan]Generating tips...[/cyan]\n")
-    tips = get_cooking_tips(recipe_name, dietary_value)
+    tips = get_cooking_tips(recipe_name, dietary_value) or ""
     console.print(Panel(Markdown(tips), title=f"Tips for {recipe_name}", border_style="cyan"))
 
 
@@ -369,7 +369,7 @@ def ingredient_substitutions_menu():
         return
 
     console.print("\n[cyan]Finding substitutions...[/cyan]\n")
-    substitutions = suggest_substitutions(ingredient)
+    substitutions = suggest_substitutions(ingredient) or ""
     console.print(Panel(Markdown(substitutions), title=f"Substitutions for {ingredient}", border_style="green"))
 
 
@@ -486,16 +486,16 @@ def pantry_menu():
 def meal_planning_menu():
     """Menu for meal planning."""
     console.print("\n[bold yellow]📅 Meal Planning[/bold yellow]\n")
-    
+
     planner = MealPlanner()
-    
+
     console.print("1. Create weekly meal plan")
     console.print("2. View current meal plan")
     console.print("3. Generate grocery list")
     console.print("4. Add specific meal to plan")
-    
+
     choice = Prompt.ask("\nSelect an option", choices=["1", "2", "3", "4"])
-    
+
     if choice == "1":
         console.print("\n[dim]Optional preferences:[/dim]")
         dietary = Prompt.ask("Dietary preference", default="")
@@ -506,20 +506,20 @@ def meal_planning_menu():
             console.print("[yellow]Invalid cook time entered. Skipping cook time filter.[/yellow]")
 
         dietary_pref = dietary if dietary else None
-        
+
         console.print("\n[cyan]Creating your weekly meal plan...[/cyan]\n")
         week_plan = planner.create_weekly_plan(
             dietary_preference=dietary_pref,
             max_cook_time=max_time_int
         )
-        
+
         # Display plan
         plan_table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
         plan_table.add_column("Day", style="yellow", width=12)
         plan_table.add_column("Recipe", style="white")
         plan_table.add_column("Cook Time", justify="center")
         plan_table.add_column("Servings", justify="center")
-        
+
         for day, meal in week_plan.items():
             plan_table.add_row(
                 day,
@@ -527,25 +527,25 @@ def meal_planning_menu():
                 f"{meal['cook_time']} min",
                 str(meal["servings"])
             )
-        
+
         console.print("\n[bold green]Your Weekly Meal Plan:[/bold green]\n")
         console.print(plan_table)
         console.print("\n[green]✓ Meal plan saved![/green]")
-    
+
     elif choice == "2":
         current_plan = planner.get_current_plan()
-        
+
         if not current_plan:
             console.print("\n[yellow]No meal plan found. Create one first![/yellow]")
             return
-        
+
         # Display plan
         plan_table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
         plan_table.add_column("Day", style="yellow", width=12)
         plan_table.add_column("Recipe", style="white")
         plan_table.add_column("Cook Time", justify="center")
         plan_table.add_column("Servings", justify="center")
-        
+
         for day, meal in current_plan.items():
             plan_table.add_row(
                 day,
@@ -553,34 +553,34 @@ def meal_planning_menu():
                 f"{meal['cook_time']} min",
                 str(meal["servings"])
             )
-        
+
         console.print("\n[bold green]Your Current Meal Plan:[/bold green]\n")
         console.print(plan_table)
-    
+
     elif choice == "3":
         current_plan = planner.get_current_plan()
-        
+
         if not current_plan:
             console.print("\n[yellow]No meal plan found. Create one first![/yellow]")
             return
-        
+
         grocery_list = planner.generate_grocery_list(current_plan)
-        
+
         console.print("\n[bold green]🛒 Your Grocery List:[/bold green]\n")
-        
+
         for category, items in grocery_list.items():
             console.print(f"\n[bold cyan]{category}:[/bold cyan]")
             for item in sorted(items, key=lambda x: x.get("item", "")):
                 console.print(f"  □ {item.get('item', 'Unknown')} ({item.get('quantity', 1)} {item.get('unit', 'recipe-use')})")
-    
+
     elif choice == "4":
         console.print("\nAvailable recipes:")
         for idx, recipe in enumerate(RECIPE_DATABASE[:10], 1):
             console.print(f"{idx}. {recipe['name']}")
-        
+
         recipe_name = Prompt.ask("\nEnter recipe name")
         day = Prompt.ask("Enter day of week")
-        
+
         if planner.add_meal_to_plan(day.title(), recipe_name):
             console.print(f"[green]✓ Added {recipe_name} to {day}![/green]")
         else:
@@ -590,36 +590,36 @@ def meal_planning_menu():
 def saved_recipes_menu():
     """Menu for viewing saved recipes."""
     console.print("\n[bold yellow]💾 Saved Recipes[/bold yellow]\n")
-    
+
     saved_recipes = SavedRecipes()
     saved = saved_recipes.get_all_saved()
-    
+
     if not saved:
         console.print("[yellow]No saved recipes yet. Save some from the recipe finder or AI generator![/yellow]")
         return
-    
+
     # Display saved recipes
     saved_table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
     saved_table.add_column("#", style="dim", width=3)
     saved_table.add_column("Recipe Name", style="yellow")
     saved_table.add_column("Saved At", style="dim")
-    
+
     for idx, recipe in enumerate(saved, 1):
         saved_table.add_row(
             str(idx),
             recipe.get("name", "Unknown"),
             recipe.get("saved_at", "")
         )
-    
+
     console.print(saved_table)
-    
+
     # Options
     console.print("\n1. View recipe details")
     console.print("2. Remove from favorites")
     console.print("3. Go back")
-    
+
     choice = Prompt.ask("\nSelect an option", choices=["1", "2", "3"])
-    
+
     if choice == "1":
         recipe_num = Prompt.ask("Enter recipe number")
         try:
@@ -628,7 +628,7 @@ def saved_recipes_menu():
                 display_recipe(saved[idx])
         except ValueError:
             console.print("[red]Invalid selection.[/red]")
-    
+
     elif choice == "2":
         recipe_num = Prompt.ask("Enter recipe number to remove")
         try:
@@ -644,7 +644,7 @@ def saved_recipes_menu():
 def browse_all_recipes():
     """Browse all available recipes."""
     console.print("\n[bold yellow]📖 Browse All Recipes[/bold yellow]\n")
-    
+
     # Apply filters
     console.print("[dim]Optional filters (press Enter to skip):[/dim]")
     max_time = Prompt.ask("Maximum cook time (minutes)", default="")
@@ -655,18 +655,18 @@ def browse_all_recipes():
     difficulty = Prompt.ask("Difficulty level (easy/medium/hard)", default="")
     dietary = Prompt.ask("Dietary preference", default="")
     cuisine = Prompt.ask("Cuisine type", default="")
-    
+
     filtered = filter_recipes(
         cook_time=max_time_int,
         difficulty=difficulty if difficulty else None,
         dietary=dietary if dietary else None,
         cuisine=cuisine if cuisine else None
     )
-    
+
     if not filtered:
         console.print("\n[red]No recipes match your filters.[/red]")
         return
-    
+
     # Display recipes
     recipe_table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
     recipe_table.add_column("#", style="dim", width=3)
@@ -674,7 +674,7 @@ def browse_all_recipes():
     recipe_table.add_column("Cuisine", style="cyan")
     recipe_table.add_column("Cook Time", justify="center")
     recipe_table.add_column("Difficulty", justify="center")
-    
+
     for idx, recipe in enumerate(filtered, 1):
         recipe_table.add_row(
             str(idx),
@@ -683,10 +683,10 @@ def browse_all_recipes():
             f"{recipe['cook_time']} min",
             recipe["difficulty"]
         )
-    
+
     console.print(f"\n[bold green]Found {len(filtered)} recipes:[/bold green]\n")
     console.print(recipe_table)
-    
+
     # View details
     if Confirm.ask("\nView recipe details?"):
         recipe_num = Prompt.ask("Enter recipe number")
@@ -694,7 +694,7 @@ def browse_all_recipes():
             idx = int(recipe_num) - 1
             if 0 <= idx < len(filtered):
                 display_recipe(filtered[idx])
-                
+
                 if Confirm.ask("Save this recipe?"):
                     saved_recipes = SavedRecipes()
                     if saved_recipes.add_recipe(filtered[idx]):
@@ -720,9 +720,9 @@ def main_menu():
         console.print("[cyan]10.[/cyan] 🔁 Ingredient substitutions")
         console.print("[cyan]11.[/cyan] 🚪 Exit")
         console.print("[bold cyan]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold cyan]")
-        
+
         choice = Prompt.ask("\nSelect an option", choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"])
-        
+
         if choice == "1":
             find_recipes_menu()
         elif choice == "2":
@@ -752,15 +752,15 @@ def main():
     """Main application entry point."""
     display_banner()
     console.print("[dim]Making cooking easier, one recipe at a time...[/dim]\n")
-    
+
     # Load environment variables
     load_dotenv()
-    
+
     # Check for API key
     if not os.getenv("OPENAI_API_KEY"):
         console.print("[yellow]⚠️  Note: OPENAI_API_KEY not found. AI features will be limited.[/yellow]")
         console.print("[dim]Set up your API key in a .env file to enable AI recipe generation.[/dim]\n")
-    
+
     try:
         main_menu()
     except KeyboardInterrupt:
