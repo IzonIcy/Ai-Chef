@@ -6,7 +6,7 @@ Tracks cooking streaks, badges/achievements, and weekly challenges
 import json
 import os
 from datetime import datetime, timedelta
-from typing import List, Dict, Optional
+from typing import List, Optional
 
 
 class CookingStreak:
@@ -20,7 +20,7 @@ class CookingStreak:
         """Load streak data from file."""
         if os.path.exists(self.filename):
             try:
-                with open(self.filename, 'r') as f:
+                with open(self.filename, "r") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
                 return self._default_data()
@@ -36,15 +36,21 @@ class CookingStreak:
             "quick_meals": 0,
             "vegetarian_meals": 0,
             "vegan_meals": 0,
-            "cuisine_counts": {}
+            "cuisine_counts": {},
         }
 
     def save_streak(self):
         """Save streak data to file."""
-        with open(self.filename, 'w') as f:
+        with open(self.filename, "w") as f:
             json.dump(self.data, f, indent=2)
 
-    def record_meal_cooked(self, cuisine: Optional[str] = None, cooking_time: Optional[int] = None, is_vegetarian: bool = False, is_vegan: bool = False):
+    def record_meal_cooked(
+        self,
+        cuisine: Optional[str] = None,
+        cooking_time: Optional[int] = None,
+        is_vegetarian: bool = False,
+        is_vegan: bool = False,
+    ):
         """Record that a meal was cooked today."""
         today = datetime.now().date().isoformat()
         last_date = self.data.get("last_cooked_date")
@@ -99,14 +105,22 @@ class CookingStreak:
         return {
             "current_streak": self.data["current_streak"],
             "longest_streak": self.data["longest_streak"],
-            "total_meals": self.data["total_meals_cooked"]
+            "total_meals": self.data["total_meals_cooked"],
         }
 
 
 class Achievement:
     """Represents a single achievement/badge."""
 
-    def __init__(self, id: str, name: str, description: str, icon: str, unlocked: bool = False, unlock_date: Optional[str] = None):
+    def __init__(
+        self,
+        id: str,
+        name: str,
+        description: str,
+        icon: str,
+        unlocked: bool = False,
+        unlock_date: Optional[str] = None,
+    ):
         self.id = id
         self.name = name
         self.description = description
@@ -121,7 +135,7 @@ class Achievement:
             "description": self.description,
             "icon": self.icon,
             "unlocked": self.unlocked,
-            "unlock_date": self.unlock_date
+            "unlock_date": self.unlock_date,
         }
 
 
@@ -131,70 +145,40 @@ class AchievementTracker:
     # Define all possible achievements
     ACHIEVEMENTS = {
         "first_recipe": Achievement(
-            "first_recipe",
-            "👨‍🍳 Your First Dish",
-            "Cook your first recipe",
-            "👨‍🍳"
+            "first_recipe", "👨‍🍳 Your First Dish", "Cook your first recipe", "👨‍🍳"
         ),
         "italian_explorer": Achievement(
-            "italian_explorer",
-            "🇮🇹 Italian Explorer",
-            "Cook 3 Italian recipes",
-            "🇮🇹"
+            "italian_explorer", "🇮🇹 Italian Explorer", "Cook 3 Italian recipes", "🇮🇹"
         ),
         "asian_master": Achievement(
-            "asian_master",
-            "🍜 Asian Master",
-            "Cook 3 Asian recipes",
-            "🍜"
+            "asian_master", "🍜 Asian Master", "Cook 3 Asian recipes", "🍜"
         ),
         "mexican_fiesta": Achievement(
-            "mexican_fiesta",
-            "🌮 Mexican Fiesta",
-            "Cook 3 Mexican recipes",
-            "🌮"
+            "mexican_fiesta", "🌮 Mexican Fiesta", "Cook 3 Mexican recipes", "🌮"
         ),
         "vegetarian_champion": Achievement(
             "vegetarian_champion",
             "🥗 Vegetarian Champion",
             "Cook 5 vegetarian recipes",
-            "🥗"
+            "🥗",
         ),
         "vegan_virtuoso": Achievement(
-            "vegan_virtuoso",
-            "🌱 Vegan Virtuoso",
-            "Cook 5 vegan recipes",
-            "🌱"
+            "vegan_virtuoso", "🌱 Vegan Virtuoso", "Cook 5 vegan recipes", "🌱"
         ),
         "speed_cook": Achievement(
-            "speed_cook",
-            "⚡ Speed Cook",
-            "Cook 5 recipes under 30 minutes",
-            "⚡"
+            "speed_cook", "⚡ Speed Cook", "Cook 5 recipes under 30 minutes", "⚡"
         ),
         "gourmet_chef": Achievement(
-            "gourmet_chef",
-            "👑 Gourmet Chef",
-            "Cook 10 recipes",
-            "👑"
+            "gourmet_chef", "👑 Gourmet Chef", "Cook 10 recipes", "👑"
         ),
         "master_chef": Achievement(
-            "master_chef",
-            "🏆 Master Chef",
-            "Cook 25 recipes",
-            "🏆"
+            "master_chef", "🏆 Master Chef", "Cook 25 recipes", "🏆"
         ),
         "culinary_legend": Achievement(
-            "culinary_legend",
-            "⭐ Culinary Legend",
-            "Cook 50 recipes",
-            "⭐"
+            "culinary_legend", "⭐ Culinary Legend", "Cook 50 recipes", "⭐"
         ),
         "week_warrior": Achievement(
-            "week_warrior",
-            "🔥 Week Warrior",
-            "Maintain a 7-day cooking streak",
-            "🔥"
+            "week_warrior", "🔥 Week Warrior", "Maintain a 7-day cooking streak", "🔥"
         ),
     }
 
@@ -206,7 +190,7 @@ class AchievementTracker:
         """Load achievements from file."""
         if os.path.exists(self.filename):
             try:
-                with open(self.filename, 'r') as f:
+                with open(self.filename, "r") as f:
                     data = json.load(f)
                     return {aid: Achievement(**a) for aid, a in data.items()}
             except (json.JSONDecodeError, IOError):
@@ -220,12 +204,15 @@ class AchievementTracker:
     def save_achievements(self):
         """Save achievements to file."""
         data = {aid: a.to_dict() for aid, a in self.achievements.items()}
-        with open(self.filename, 'w') as f:
+        with open(self.filename, "w") as f:
             json.dump(data, f, indent=2)
 
     def unlock_achievement(self, achievement_id: str) -> bool:
         """Unlock an achievement if it exists and isn't already unlocked."""
-        if achievement_id in self.achievements and not self.achievements[achievement_id].unlocked:
+        if (
+            achievement_id in self.achievements
+            and not self.achievements[achievement_id].unlocked
+        ):
             self.achievements[achievement_id].unlocked = True
             self.achievements[achievement_id].unlock_date = datetime.now().isoformat()
             self.save_achievements()
@@ -250,21 +237,21 @@ class WeeklyChallenges:
             "name": "🎯 Cook 5 Recipes",
             "description": "Cook 5 different recipes this week",
             "target": 5,
-            "reward": "50 points"
+            "reward": "50 points",
         },
         {
             "id": "try_new_cuisine",
             "name": "🌍 Try a New Cuisine",
             "description": "Cook a recipe from a cuisine you haven't tried before",
             "target": 1,
-            "reward": "25 points"
+            "reward": "25 points",
         },
         {
             "id": "healthy_week",
             "name": "💪 Healthy Week",
             "description": "Cook 3 vegetarian or vegan recipes",
             "target": 3,
-            "reward": "35 points"
+            "reward": "35 points",
         },
     ]
 
@@ -276,7 +263,7 @@ class WeeklyChallenges:
         """Load weekly challenges from file."""
         if os.path.exists(self.filename):
             try:
-                with open(self.filename, 'r') as f:
+                with open(self.filename, "r") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
                 return self._reset_challenges()
@@ -288,13 +275,9 @@ class WeeklyChallenges:
         return {
             "week_start": week_start,
             "challenges": [
-                {
-                    **challenge,
-                    "progress": 0,
-                    "completed": False
-                }
+                {**challenge, "progress": 0, "completed": False}
                 for challenge in self.CHALLENGES
-            ]
+            ],
         }
 
     def _get_week_start(self):
@@ -305,7 +288,7 @@ class WeeklyChallenges:
 
     def save_challenges(self):
         """Save challenges to file."""
-        with open(self.filename, 'w') as f:
+        with open(self.filename, "w") as f:
             json.dump(self.challenges, f, indent=2)
 
     def check_week_reset(self):
@@ -353,7 +336,14 @@ class GamificationManager:
         self.achievements = AchievementTracker()
         self.challenges = WeeklyChallenges()
 
-    def record_recipe_cooked(self, recipe_name: str, cuisine: Optional[str] = None, cooking_time: Optional[int] = None, is_vegetarian: bool = False, is_vegan: bool = False):
+    def record_recipe_cooked(
+        self,
+        recipe_name: str,
+        cuisine: Optional[str] = None,
+        cooking_time: Optional[int] = None,
+        is_vegetarian: bool = False,
+        is_vegan: bool = False,
+    ):
         """
         Record that a recipe was cooked and update all gamification systems.
 
@@ -369,7 +359,7 @@ class GamificationManager:
             cuisine=cuisine,
             cooking_time=cooking_time,
             is_vegetarian=is_vegetarian,
-            is_vegan=is_vegan
+            is_vegan=is_vegan,
         )
 
         # Unlock achievements
@@ -427,8 +417,12 @@ class GamificationManager:
         return {
             "streak": self.streak.get_streak_info(),
             "achievements": {
-                "unlocked": [a.to_dict() for a in self.achievements.get_unlocked_achievements()],
-                "locked": [a.to_dict() for a in self.achievements.get_locked_achievements()]
+                "unlocked": [
+                    a.to_dict() for a in self.achievements.get_unlocked_achievements()
+                ],
+                "locked": [
+                    a.to_dict() for a in self.achievements.get_locked_achievements()
+                ],
             },
-            "challenges": self.challenges.get_active_challenges()
+            "challenges": self.challenges.get_active_challenges(),
         }
