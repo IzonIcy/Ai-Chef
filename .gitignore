@@ -45,3 +45,6 @@ cooking_streak.json
 achievements.json
 weekly_challenges.json
 pantry_inventory.json
+
+# OpenCode config
+opencode.json
