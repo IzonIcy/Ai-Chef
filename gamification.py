@@ -5,8 +5,8 @@ Tracks cooking streaks, badges/achievements, and weekly challenges
 
 import json
 import os
-from datetime import datetime, timedelta
-from typing import List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import ClassVar
 
 
 class CookingStreak:
@@ -22,7 +22,7 @@ class CookingStreak:
             try:
                 with open(self.filename, "r") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 return self._default_data()
         return self._default_data()
 
@@ -46,13 +46,13 @@ class CookingStreak:
 
     def record_meal_cooked(
         self,
-        cuisine: Optional[str] = None,
-        cooking_time: Optional[int] = None,
+        cuisine: str | None = None,
+        cooking_time: int | None = None,
         is_vegetarian: bool = False,
         is_vegan: bool = False,
     ):
         """Record that a meal was cooked today."""
-        today = datetime.now().date().isoformat()
+        today = datetime.now(timezone.utc).date().isoformat()
         last_date = self.data.get("last_cooked_date")
 
         self.data["total_meals_cooked"] += 1
@@ -63,7 +63,7 @@ class CookingStreak:
             self.data["last_cooked_date"] = today
         else:
             last_cooked = datetime.fromisoformat(last_date).date()
-            today_date = datetime.now().date()
+            today_date = datetime.now(timezone.utc).date()
             days_diff = (today_date - last_cooked).days
 
             if days_diff == 0:
@@ -119,7 +119,7 @@ class Achievement:
         description: str,
         icon: str,
         unlocked: bool = False,
-        unlock_date: Optional[str] = None,
+        unlock_date: str | None = None,
     ):
         self.id = id
         self.name = name
@@ -143,7 +143,7 @@ class AchievementTracker:
     """Track user achievements and badges."""
 
     # Define all possible achievements
-    ACHIEVEMENTS = {
+    ACHIEVEMENTS: ClassVar[dict[str, Achievement]] = {
         "first_recipe": Achievement(
             "first_recipe", "👨‍🍳 Your First Dish", "Cook your first recipe", "👨‍🍳"
         ),
@@ -193,7 +193,7 @@ class AchievementTracker:
                 with open(self.filename, "r") as f:
                     data = json.load(f)
                     return {aid: Achievement(**a) for aid, a in data.items()}
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 return self._default_achievements()
         return self._default_achievements()
 
@@ -214,16 +214,18 @@ class AchievementTracker:
             and not self.achievements[achievement_id].unlocked
         ):
             self.achievements[achievement_id].unlocked = True
-            self.achievements[achievement_id].unlock_date = datetime.now().isoformat()
+            self.achievements[achievement_id].unlock_date = datetime.now(
+                timezone.utc
+            ).isoformat()
             self.save_achievements()
             return True
         return False
 
-    def get_unlocked_achievements(self) -> List[Achievement]:
+    def get_unlocked_achievements(self) -> list[Achievement]:
         """Get all unlocked achievements."""
         return [a for a in self.achievements.values() if a.unlocked]
 
-    def get_locked_achievements(self) -> List[Achievement]:
+    def get_locked_achievements(self) -> list[Achievement]:
         """Get all locked achievements."""
         return [a for a in self.achievements.values() if not a.unlocked]
 
@@ -231,7 +233,7 @@ class AchievementTracker:
 class WeeklyChallenges:
     """Manage weekly cooking challenges."""
 
-    CHALLENGES = [
+    CHALLENGES: ClassVar[list[dict[str, str | int]]] = [
         {
             "id": "cook_five",
             "name": "🎯 Cook 5 Recipes",
@@ -265,7 +267,7 @@ class WeeklyChallenges:
             try:
                 with open(self.filename, "r") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 return self._reset_challenges()
         return self._reset_challenges()
 
@@ -282,7 +284,7 @@ class WeeklyChallenges:
 
     def _get_week_start(self):
         """Get the start date of the current week (Monday)."""
-        today = datetime.now().date()
+        today = datetime.now(timezone.utc).date()
         week_start = today - timedelta(days=today.weekday())
         return week_start.isoformat()
 
@@ -339,8 +341,8 @@ class GamificationManager:
     def record_recipe_cooked(
         self,
         recipe_name: str,
-        cuisine: Optional[str] = None,
-        cooking_time: Optional[int] = None,
+        cuisine: str | None = None,
+        cooking_time: int | None = None,
         is_vegetarian: bool = False,
         is_vegan: bool = False,
     ):

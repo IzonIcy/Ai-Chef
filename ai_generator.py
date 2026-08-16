@@ -2,11 +2,12 @@
 AI-powered recipe generation using OpenAI API Infrastructure.
 """
 
-import os
 import json
+import os
 import re
-from openai import OpenAI
+
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
@@ -24,11 +25,17 @@ def _get_client():
     return client
 
 
-def generate_recipe_with_ai(ingredients=None, dietary_preference=None, cuisine_type=None, 
-                           cook_time=None, difficulty=None, description=None):
+def generate_recipe_with_ai(
+    ingredients=None,
+    dietary_preference=None,
+    cuisine_type=None,
+    cook_time=None,
+    difficulty=None,
+    description=None,
+):
     """
     Generate a custom recipe using AI based on user preferences.
-    
+
     Args:
         ingredients (list): List of ingredients to use
         dietary_preference (str): Dietary restrictions (vegetarian, vegan, etc.)
@@ -36,43 +43,43 @@ def generate_recipe_with_ai(ingredients=None, dietary_preference=None, cuisine_t
         cook_time (int): Maximum cooking time in minutes
         difficulty (str): Difficulty level
         description (str): Free-form description of what user wants
-        
+
     Returns:
         dict: Generated recipe with name, ingredients, and instructions
     """
     # Build the prompt based on provided parameters
     prompt_parts = ["Create a detailed recipe"]
-    
+
     if description:
         prompt_parts.append(f"for: {description}")
-    
+
     if ingredients:
         prompt_parts.append(f"using these ingredients: {', '.join(ingredients)}")
-    
+
     if dietary_preference:
         prompt_parts.append(f"that is {dietary_preference}")
-    
+
     if cuisine_type:
         prompt_parts.append(f"in {cuisine_type} style")
-    
+
     if cook_time:
         prompt_parts.append(f"that takes no more than {cook_time} minutes to cook")
-    
+
     if difficulty:
         prompt_parts.append(f"with {difficulty} difficulty level")
-    
+
     prompt = " ".join(prompt_parts) + "."
     prompt += "\n\nReturn ONLY valid JSON with this exact schema:\n"
-    prompt += "{\"name\": string, \"servings\": int, \"cook_time\": int, \"difficulty\": \"easy|medium|hard\", \"ingredients\": [string], \"instructions\": [string], \"cuisine\": string, \"dietary\": [string]}"
-    
+    prompt += '{"name": string, "servings": int, "cook_time": int, "difficulty": "easy|medium|hard", "ingredients": [string], "instructions": [string], "cuisine": string, "dietary": [string]}'
+
     try:
         client_instance = _get_client()
         if not client_instance:
             return {
                 "error": "OpenAI client not initialized",
-                "suggestion": "Make sure your OPENAI_API_KEY is set correctly in the .env file"
+                "suggestion": "Make sure your OPENAI_API_KEY is set correctly in the .env file",
             }
-        
+
         last_parse_error = None
         for attempt in range(2):
             response = client_instance.chat.completions.create(
@@ -80,15 +87,17 @@ def generate_recipe_with_ai(ingredients=None, dietary_preference=None, cuisine_t
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a professional chef who creates delicious, easy-to-follow recipes tailored to user preferences. Output must be valid JSON only."
+                        "content": "You are a professional chef who creates delicious, easy-to-follow recipes tailored to user preferences. Output must be valid JSON only.",
                     },
                     {
                         "role": "user",
-                        "content": prompt if attempt == 0 else f"Your previous output was not parseable ({last_parse_error}). Return only valid JSON in the exact schema."
-                    }
+                        "content": prompt
+                        if attempt == 0
+                        else f"Your previous output was not parseable ({last_parse_error}). Return only valid JSON in the exact schema.",
+                    },
                 ],
                 temperature=0.7,
-                max_tokens=1500
+                max_tokens=1500,
             )
 
             recipe_text = (response.choices[0].message.content or "").strip()
@@ -100,23 +109,23 @@ def generate_recipe_with_ai(ingredients=None, dietary_preference=None, cuisine_t
 
         return {
             "error": f"Failed to parse recipe response: {last_parse_error}",
-            "suggestion": "Try being more specific with ingredients, cuisine, and cooking time."
+            "suggestion": "Try being more specific with ingredients, cuisine, and cooking time.",
         }
-    
-    except Exception as e:
+
+    except Exception as e:  # noqa: BLE001 - surface any API error to the user
         return {
-            "error": f"Failed to generate recipe: {str(e)}",
-            "suggestion": "Make sure your OPENAI_API_KEY is set correctly in the .env file"
+            "error": f"Failed to generate recipe: {e!s}",
+            "suggestion": "Make sure your OPENAI_API_KEY is set correctly in the .env file",
         }
 
 
 def parse_ai_recipe(recipe_text):
     """
     Parse the AI-generated recipe text into structured format.
-    
+
     Args:
         recipe_text (str): Raw text from AI
-        
+
     Returns:
         dict: Structured recipe data
     """
@@ -124,7 +133,7 @@ def parse_ai_recipe(recipe_text):
     if parsed_json:
         return _normalize_recipe(parsed_json)
 
-    lines = recipe_text.strip().split('\n')
+    lines = recipe_text.strip().split("\n")
     recipe = {
         "name": "",
         "servings": 2,
@@ -133,16 +142,16 @@ def parse_ai_recipe(recipe_text):
         "ingredients": [],
         "instructions": [],
         "cuisine": "Custom",
-        "dietary": []
+        "dietary": [],
     }
-    
+
     current_section = None
-    
+
     for line in lines:
         line = line.strip()
         if not line:
             continue
-            
+
         if line.startswith("Recipe Name:"):
             recipe["name"] = line.replace("Recipe Name:", "").strip()
         elif line.startswith("Servings:"):
@@ -155,7 +164,7 @@ def parse_ai_recipe(recipe_text):
             current_section = "ingredients"
         elif line.startswith("Instructions:"):
             current_section = "instructions"
-        elif current_section == "ingredients" and (line.startswith("-") or line.startswith("•")):
+        elif current_section == "ingredients" and line.startswith(("-", "•")):
             ingredient = line[1:].strip()
             if ingredient:
                 recipe["ingredients"].append(ingredient)
@@ -191,14 +200,16 @@ def _try_parse_json_recipe(recipe_text):
 def _normalize_recipe(recipe):
     """Normalize and validate parsed recipe content."""
     normalized = {
-        "name": str(recipe.get("name") or recipe.get("recipe_name") or "AI Recipe").strip(),
+        "name": str(
+            recipe.get("name") or recipe.get("recipe_name") or "AI Recipe"
+        ).strip(),
         "servings": _safe_int(recipe.get("servings"), default=2),
         "cook_time": _safe_int(recipe.get("cook_time"), default=30),
         "difficulty": str(recipe.get("difficulty") or "medium").strip().lower(),
         "ingredients": _normalize_list_field(recipe.get("ingredients")),
         "instructions": _normalize_list_field(recipe.get("instructions")),
         "cuisine": str(recipe.get("cuisine") or "Custom").strip(),
-        "dietary": _normalize_list_field(recipe.get("dietary"))
+        "dietary": _normalize_list_field(recipe.get("dietary")),
     }
 
     if normalized["difficulty"] not in {"easy", "medium", "hard"}:
@@ -207,7 +218,7 @@ def _normalize_recipe(recipe):
     if not normalized["ingredients"] or not normalized["instructions"]:
         return {
             "error": "Incomplete AI recipe output",
-            "suggestion": "The model response missed ingredients or instructions. Please retry."
+            "suggestion": "The model response missed ingredients or instructions. Please retry.",
         }
 
     return normalized
@@ -237,67 +248,73 @@ def _safe_int(value, default=0):
 def get_cooking_tips(recipe_name, dietary_preferences=None):
     """
     Get AI-generated cooking tips for a specific recipe.
-    
+
     Args:
         recipe_name (str): Name of the recipe
         dietary_preferences (str): Any dietary preferences to consider
-        
+
     Returns:
         str: Cooking tips and suggestions
     """
     prompt = f"Provide 3-5 helpful cooking tips for making {recipe_name}"
     if dietary_preferences:
         prompt += f" with {dietary_preferences} modifications"
-    
+
     try:
         client_instance = _get_client()
         if not client_instance:
             return "Unable to generate tips: OpenAI API key not set"
-        
+
         response = client_instance.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a helpful cooking assistant providing practical tips."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "You are a helpful cooking assistant providing practical tips.",
+                },
+                {"role": "user", "content": prompt},
             ],
             temperature=0.7,
-            max_tokens=300
+            max_tokens=300,
         )
-        
+
         return response.choices[0].message.content
-    
-    except Exception as e:
-        return f"Unable to generate tips: {str(e)}"
+
+    except Exception as e:  # noqa: BLE001 - surface any API error to the user
+        return f"Unable to generate tips: {e!s}"
 
 
 def suggest_substitutions(ingredient):
     """
     Suggest ingredient substitutions using AI.
-    
+
     Args:
         ingredient (str): Ingredient to find substitutions for
-        
+
     Returns:
         str: List of possible substitutions
     """
     prompt = f"What are good substitutions for {ingredient} in cooking? Provide 3-4 options with brief explanations."
-    
+
     try:
         client_instance = _get_client()
         if not client_instance:
             return "Unable to suggest substitutions: OpenAI API key not set"
-        
+
         response = client_instance.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "You are a knowledgeable chef helping with ingredient substitutions."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "You are a knowledgeable chef helping with ingredient substitutions.",
+                },
+                {"role": "user", "content": prompt},
             ],
             temperature=0.7,
-            max_tokens=200
+            max_tokens=200,
         )
-        
+
         return response.choices[0].message.content
-    
-    except Exception as e:
-        return f"Unable to suggest substitutions: {str(e)}"
+
+    except Exception as e:  # noqa: BLE001 - surface any API error to the user
+        return f"Unable to suggest substitutions: {e!s}"

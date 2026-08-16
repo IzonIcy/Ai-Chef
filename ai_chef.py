@@ -822,8 +822,8 @@ def main():
         main_menu()
     except KeyboardInterrupt:
         console.print("\n\n[bold cyan]Goodbye! 👋[/bold cyan]\n")
-    except Exception as e:
-        console.print(f"\n[red]An error occurred: {str(e)}[/red]\n")
+    except Exception as e:  # noqa: BLE001 - never crash the CLI, print a friendly error
+        console.print(f"\n[red]An error occurred: {e!s}[/red]\n")
 
 
 if __name__ == "__main__":

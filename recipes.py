@@ -18,12 +18,19 @@ RECIPE_DATABASE = [
             "Add chicken and cook until golden brown, about 5-7 minutes",
             "Add broccoli florets and stir-fry for 3-4 minutes",
             "Add soy sauce and toss everything together",
-            "Serve hot over rice"
-        ]
+            "Serve hot over rice",
+        ],
     },
     {
         "name": "Garlic Chicken and Rice",
-        "ingredients": ["chicken", "rice", "garlic", "butter", "chicken broth", "thyme"],
+        "ingredients": [
+            "chicken",
+            "rice",
+            "garlic",
+            "butter",
+            "chicken broth",
+            "thyme",
+        ],
         "cook_time": 35,
         "difficulty": "easy",
         "cuisine": "American",
@@ -37,12 +44,20 @@ RECIPE_DATABASE = [
             "In the same pan, add minced garlic and rice, toast for 1 minute",
             "Add chicken broth and thyme, bring to a boil",
             "Return chicken to pan, cover and simmer for 20 minutes",
-            "Let rest 5 minutes before serving"
-        ]
+            "Let rest 5 minutes before serving",
+        ],
     },
     {
         "name": "One-Pan Chicken Broccoli Rice",
-        "ingredients": ["chicken", "rice", "broccoli", "onion", "garlic", "chicken broth", "cheese"],
+        "ingredients": [
+            "chicken",
+            "rice",
+            "broccoli",
+            "onion",
+            "garlic",
+            "chicken broth",
+            "cheese",
+        ],
         "cook_time": 40,
         "difficulty": "easy",
         "cuisine": "American",
@@ -55,12 +70,20 @@ RECIPE_DATABASE = [
             "Cover tightly with foil and bake for 25 minutes",
             "Remove from oven, add broccoli florets, cover and bake for another 10 minutes",
             "Sprinkle cheese on top and return to oven uncovered for 5 minutes",
-            "Let stand for 5 minutes before serving"
-        ]
+            "Let stand for 5 minutes before serving",
+        ],
     },
     {
         "name": "Vegetarian Pasta Primavera",
-        "ingredients": ["pasta", "broccoli", "bell pepper", "zucchini", "garlic", "olive oil", "parmesan"],
+        "ingredients": [
+            "pasta",
+            "broccoli",
+            "bell pepper",
+            "zucchini",
+            "garlic",
+            "olive oil",
+            "parmesan",
+        ],
         "cook_time": 25,
         "difficulty": "easy",
         "cuisine": "Italian",
@@ -73,12 +96,20 @@ RECIPE_DATABASE = [
             "Add broccoli, bell pepper, and zucchini, cook for 5-7 minutes",
             "Drain pasta and add to vegetables",
             "Toss everything together with parmesan cheese",
-            "Season with salt, pepper, and red pepper flakes"
-        ]
+            "Season with salt, pepper, and red pepper flakes",
+        ],
     },
     {
         "name": "Beef Tacos",
-        "ingredients": ["ground beef", "taco seasoning", "tortillas", "lettuce", "tomato", "cheese", "sour cream"],
+        "ingredients": [
+            "ground beef",
+            "taco seasoning",
+            "tortillas",
+            "lettuce",
+            "tomato",
+            "cheese",
+            "sour cream",
+        ],
         "cook_time": 20,
         "difficulty": "easy",
         "cuisine": "Mexican",
@@ -91,12 +122,19 @@ RECIPE_DATABASE = [
             "Simmer for 5 minutes until thickened",
             "Warm tortillas in microwave or on stovetop",
             "Assemble tacos with beef and your favorite toppings",
-            "Serve with sour cream on the side"
-        ]
+            "Serve with sour cream on the side",
+        ],
     },
     {
         "name": "Salmon with Roasted Vegetables",
-        "ingredients": ["salmon", "broccoli", "bell pepper", "olive oil", "lemon", "garlic"],
+        "ingredients": [
+            "salmon",
+            "broccoli",
+            "bell pepper",
+            "olive oil",
+            "lemon",
+            "garlic",
+        ],
         "cook_time": 25,
         "difficulty": "medium",
         "cuisine": "Mediterranean",
@@ -109,12 +147,19 @@ RECIPE_DATABASE = [
             "Drizzle everything with olive oil and minced garlic",
             "Season with salt, pepper, and lemon juice",
             "Roast for 15-20 minutes until salmon flakes easily",
-            "Serve with lemon wedges"
-        ]
+            "Serve with lemon wedges",
+        ],
     },
     {
         "name": "Creamy Tomato Soup",
-        "ingredients": ["tomatoes", "onion", "garlic", "vegetable broth", "cream", "basil"],
+        "ingredients": [
+            "tomatoes",
+            "onion",
+            "garlic",
+            "vegetable broth",
+            "cream",
+            "basil",
+        ],
         "cook_time": 30,
         "difficulty": "easy",
         "cuisine": "American",
@@ -127,12 +172,19 @@ RECIPE_DATABASE = [
             "Use an immersion blender to puree the soup until smooth",
             "Stir in cream and fresh basil",
             "Season with salt and pepper to taste",
-            "Serve hot with crusty bread"
-        ]
+            "Serve hot with crusty bread",
+        ],
     },
     {
         "name": "Veggie Buddha Bowl",
-        "ingredients": ["rice", "chickpeas", "sweet potato", "kale", "avocado", "tahini"],
+        "ingredients": [
+            "rice",
+            "chickpeas",
+            "sweet potato",
+            "kale",
+            "avocado",
+            "tahini",
+        ],
         "cook_time": 35,
         "difficulty": "medium",
         "cuisine": "International",
@@ -145,12 +197,18 @@ RECIPE_DATABASE = [
             "Massage kale with a bit of olive oil and lemon juice",
             "Assemble bowls with rice as base",
             "Top with roasted vegetables, kale, and sliced avocado",
-            "Drizzle with tahini dressing"
-        ]
+            "Drizzle with tahini dressing",
+        ],
     },
     {
         "name": "Classic Caesar Salad",
-        "ingredients": ["romaine lettuce", "parmesan", "croutons", "caesar dressing", "lemon"],
+        "ingredients": [
+            "romaine lettuce",
+            "parmesan",
+            "croutons",
+            "caesar dressing",
+            "lemon",
+        ],
         "cook_time": 10,
         "difficulty": "easy",
         "cuisine": "Italian",
@@ -163,12 +221,20 @@ RECIPE_DATABASE = [
             "Top with croutons",
             "Add a squeeze of fresh lemon juice",
             "Toss gently to combine",
-            "Serve immediately"
-        ]
+            "Serve immediately",
+        ],
     },
     {
         "name": "Shrimp Scampi",
-        "ingredients": ["shrimp", "pasta", "garlic", "butter", "white wine", "lemon", "parsley"],
+        "ingredients": [
+            "shrimp",
+            "pasta",
+            "garlic",
+            "butter",
+            "white wine",
+            "lemon",
+            "parsley",
+        ],
         "cook_time": 20,
         "difficulty": "medium",
         "cuisine": "Italian",
@@ -181,72 +247,82 @@ RECIPE_DATABASE = [
             "Add shrimp and cook until pink, about 3 minutes per side",
             "Add white wine and lemon juice, simmer for 2 minutes",
             "Toss in cooked pasta and chopped parsley",
-            "Season with salt, pepper, and red pepper flakes"
-        ]
-    }
+            "Season with salt, pepper, and red pepper flakes",
+        ],
+    },
 ]
 
 
 def find_recipes_by_ingredients(available_ingredients):
     """
     Find recipes that can be made with the available ingredients.
-    
+
     Args:
         available_ingredients (list): List of ingredient names
-        
+
     Returns:
         list: Recipes sorted by number of matching ingredients
     """
-    available_set = set(ingredient.lower().strip() for ingredient in available_ingredients)
+    available_set = {ingredient.lower().strip() for ingredient in available_ingredients}
     matches = []
-    
+
     for recipe in RECIPE_DATABASE:
-        recipe_ingredients = set(ingredient.lower() for ingredient in recipe["ingredients"])
+        recipe_ingredients = {
+            ingredient.lower() for ingredient in recipe["ingredients"]
+        }
         matching = recipe_ingredients.intersection(available_set)
         missing = recipe_ingredients - available_set
-        
+
         if matching:  # At least one ingredient matches
             match_percentage = len(matching) / len(recipe_ingredients)
-            matches.append({
-                "recipe": recipe,
-                "matching_count": len(matching),
-                "missing_count": len(missing),
-                "match_percentage": match_percentage,
-                "missing_ingredients": list(missing)
-            })
-    
+            matches.append(
+                {
+                    "recipe": recipe,
+                    "matching_count": len(matching),
+                    "missing_count": len(missing),
+                    "match_percentage": match_percentage,
+                    "missing_ingredients": list(missing),
+                }
+            )
+
     # Sort by match percentage, then by number of matching ingredients
-    matches.sort(key=lambda x: (x["match_percentage"], x["matching_count"]), reverse=True)
+    matches.sort(
+        key=lambda x: (x["match_percentage"], x["matching_count"]), reverse=True
+    )
     return matches
 
 
 def filter_recipes(cook_time=None, difficulty=None, dietary=None, cuisine=None):
     """
     Filter recipes based on various criteria.
-    
+
     Args:
         cook_time (int): Maximum cooking time in minutes
         difficulty (str): Difficulty level (easy, medium, hard)
         dietary (str): Dietary restriction (vegetarian, vegan, gluten-free, etc.)
         cuisine (str): Cuisine type
-        
+
     Returns:
         list: Filtered recipes
     """
     filtered = RECIPE_DATABASE.copy()
-    
+
     if cook_time:
         filtered = [r for r in filtered if r["cook_time"] <= cook_time]
-    
+
     if difficulty:
-        filtered = [r for r in filtered if r["difficulty"].lower() == difficulty.lower()]
-    
+        filtered = [
+            r for r in filtered if r["difficulty"].lower() == difficulty.lower()
+        ]
+
     if dietary:
-        filtered = [r for r in filtered if dietary.lower() in [d.lower() for d in r["dietary"]]]
-    
+        filtered = [
+            r for r in filtered if dietary.lower() in [d.lower() for d in r["dietary"]]
+        ]
+
     if cuisine:
         filtered = [r for r in filtered if r["cuisine"].lower() == cuisine.lower()]
-    
+
     return filtered
 
 

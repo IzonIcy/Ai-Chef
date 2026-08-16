@@ -3,8 +3,8 @@
 
 def test_imports():
     """Verify all key dependencies can be imported."""
-    import openai
     import dotenv
+    import openai
     import rich
 
     assert openai is not None
