@@ -1,5 +1,7 @@
 # AI Chef
 
+[![CI](https://github.com/IzonIcy/Ai-Chef/actions/workflows/ci.yml/badge.svg)](https://github.com/IzonIcy/Ai-Chef/actions/workflows/ci.yml)
+
 A terminal app that helps you figure out what to cook based on ingredients you already have.
 
 I built this because I kept buying groceries without a plan, letting food go bad, and then ordering takeout. Turns out the problem wasn't lack of recipes — it was that looking through cookbooks for "what can I make with chicken, rice, and broccoli" takes forever. So I made something that does it instantly.
