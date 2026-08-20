@@ -6,6 +6,7 @@ A command-line based application to help you discover recipes, plan meals, and t
 
 import os
 
+from dotenv import load_dotenv
 from rich import box
 from rich.console import Console
 from rich.markdown import Markdown
@@ -21,14 +22,6 @@ from ai_generator import (
 from gamification import GamificationManager
 from meal_planner import MealPlanner, PantryManager, SavedRecipes
 from recipes import RECIPE_DATABASE, filter_recipes, find_recipes_by_ingredients
-
-try:
-    from dotenv import load_dotenv  # pyright: ignore[reportAssignmentType]
-except ImportError:
-
-    def load_dotenv():
-        return None
-
 
 load_dotenv()
 

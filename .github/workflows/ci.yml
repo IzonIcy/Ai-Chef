@@ -31,7 +31,7 @@ jobs:
         run: ruff check .
 
       - name: Type check
-        run: mypy . || true
+        run: mypy .
 
       - name: Test
         run: python -m pytest
