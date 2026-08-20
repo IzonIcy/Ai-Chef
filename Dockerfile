@@ -7,4 +7,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+RUN useradd --create-home --uid 1000 chef
+USER chef
+
 CMD ["python", "-m", "ai_chef"]
