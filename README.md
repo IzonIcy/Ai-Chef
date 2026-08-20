@@ -1,6 +1,6 @@
 # AI Chef
 
-[![CI](https://github.com/IzonIcy/Ai-Chef/actions/workflows/ci.yml/badge.svg)](https://github.com/IzonIcy/Ai-Chef/actions/workflows/ci.yml)
+[![CI](https://github.com/Codingmaster123fe/Ai-Chef/actions/workflows/ci.yml/badge.svg)](https://github.com/Codingmaster123fe/Ai-Chef/actions/workflows/ci.yml)
 
 A terminal app that helps you figure out what to cook based on ingredients you already have.
 
@@ -30,7 +30,7 @@ The recipe finder works without it. The AI generation is the fun part though.
 
 ## Tech
 
-Python 3.8+, OpenAI API, Rich for the terminal UI. Recipes live in a JSON file because SQLite felt like overkill for something I can edit by hand.
+Python 3.13, OpenAI API, Rich for the terminal UI. Recipes live in a JSON file because SQLite felt like overkill for something I can edit by hand.
 
 ## What I learned
 
