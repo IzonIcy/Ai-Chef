@@ -8,11 +8,15 @@ import os
 from datetime import datetime, timedelta, timezone
 from typing import ClassVar
 
+from data_dir import get_data_dir
+
 
 class CookingStreak:
     """Track user's cooking streak."""
 
-    def __init__(self, filename="cooking_streak.json"):
+    def __init__(self, filename=None):
+        if filename is None:
+            filename = str(get_data_dir() / "cooking_streak.json")
         self.filename = filename
         self.data = self.load_streak()
 
@@ -182,7 +186,9 @@ class AchievementTracker:
         ),
     }
 
-    def __init__(self, filename="achievements.json"):
+    def __init__(self, filename=None):
+        if filename is None:
+            filename = str(get_data_dir() / "achievements.json")
         self.filename = filename
         self.achievements = self.load_achievements()
 
@@ -257,7 +263,9 @@ class WeeklyChallenges:
         },
     ]
 
-    def __init__(self, filename="weekly_challenges.json"):
+    def __init__(self, filename=None):
+        if filename is None:
+            filename = str(get_data_dir() / "weekly_challenges.json")
         self.filename = filename
         self.challenges = self.load_challenges()
 

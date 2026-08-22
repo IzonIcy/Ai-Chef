@@ -2,6 +2,110 @@
 Recipe database with ingredient-based search functionality
 """
 
+import json
+import re
+
+from data_dir import get_data_dir
+
+
+def _user_recipes_path():
+    return get_data_dir() / "user_recipes.json"
+
+
+def load_user_recipes():
+    """Load user-defined recipes from the data directory."""
+    path = _user_recipes_path()
+    try:
+        data = json.loads(path.read_text())
+    except FileNotFoundError:
+        return []
+    except (OSError, json.JSONDecodeError):
+        return []
+    if not isinstance(data, list):
+        return []
+    return [recipe for recipe in data if isinstance(recipe, dict)]
+
+
+def save_user_recipes(recipes):
+    """Persist user-defined recipes to the data directory."""
+    path = _user_recipes_path()
+    path.write_text(json.dumps(recipes, indent=2))
+
+
+def add_user_recipe(recipe):
+    """Add a user recipe, rejecting duplicate names. Returns True on success."""
+    name = (recipe.get("name") or "").strip().lower()
+    if not name:
+        raise ValueError("recipe must have a name")
+    for existing in load_user_recipes():
+        if existing.get("name", "").strip().lower() == name:
+            return False
+    recipes = load_user_recipes()
+    recipes.append(recipe)
+    save_user_recipes(recipes)
+    return True
+
+
+def remove_user_recipe(name):
+    """Remove a user recipe by exact name. Returns True if removed."""
+    recipes = load_user_recipes()
+    remaining = [
+        r for r in recipes if r.get("name", "").strip().lower() != name.strip().lower()
+    ]
+    if len(remaining) == len(recipes):
+        return False
+    save_user_recipes(remaining)
+    return True
+
+
+def all_recipes():
+    """Built-in recipes plus any user-defined ones."""
+    return RECIPE_DATABASE + load_user_recipes()
+
+
+_LEADING_AMOUNT_RE = re.compile(r"^(\d+(?:\.\d+)?)(?:\s*/\s*(\d+))?(?=\s|$)")
+
+
+def _format_amount(value):
+    rounded = round(value, 2)
+    if abs(rounded - round(rounded)) < 1e-9:
+        return str(round(rounded))
+    return f"{rounded:g}"
+
+
+def scale_recipe(recipe, factor):
+    """Return a copy of the recipe scaled by ``factor``.
+
+    Servings are multiplied. Ingredient strings that start with an amount
+    ("2 cups rice", "1.5 tbsp oil", "1/2 cup milk") have that amount scaled;
+    ingredients without a leading amount pass through unchanged.
+    """
+    factor = float(factor)
+    if factor <= 0:
+        raise ValueError("scale factor must be positive")
+
+    scaled = dict(recipe)
+    servings = recipe.get("servings", 1)
+    try:
+        scaled["servings"] = max(1, round(float(servings) * factor))
+    except (TypeError, ValueError):
+        scaled["servings"] = servings
+
+    def scale_ingredient(ingredient):
+        match = _LEADING_AMOUNT_RE.match(ingredient.strip())
+        if not match:
+            return ingredient
+        amount = float(match.group(1))
+        denominator = match.group(2)
+        if denominator:
+            amount /= float(denominator)
+        rest = ingredient.strip()[match.end() :].strip()
+        return f"{_format_amount(amount * factor)} {rest}".strip()
+
+    scaled["ingredients"] = [scale_ingredient(i) for i in recipe.get("ingredients", [])]
+    return scaled
+
+
 RECIPE_DATABASE = [
     {
         "name": "Chicken Stir-Fry with Broccoli",
@@ -266,7 +370,7 @@ def find_recipes_by_ingredients(available_ingredients):
     available_set = {ingredient.lower().strip() for ingredient in available_ingredients}
     matches = []
 
-    for recipe in RECIPE_DATABASE:
+    for recipe in all_recipes():
         recipe_ingredients = {
             ingredient.lower() for ingredient in recipe["ingredients"]
         }
@@ -305,7 +409,7 @@ def filter_recipes(cook_time=None, difficulty=None, dietary=None, cuisine=None):
     Returns:
         list: Filtered recipes
     """
-    filtered = RECIPE_DATABASE.copy()
+    filtered = all_recipes()
 
     if cook_time:
         filtered = [r for r in filtered if r["cook_time"] <= cook_time]
@@ -328,7 +432,7 @@ def filter_recipes(cook_time=None, difficulty=None, dietary=None, cuisine=None):
 
 def get_recipe_by_name(name):
     """Get a specific recipe by name."""
-    for recipe in RECIPE_DATABASE:
+    for recipe in all_recipes():
         if recipe["name"].lower() == name.lower():
             return recipe
     return None

@@ -2,11 +2,14 @@
 Meal planning and grocery list generation
 """
 
+import csv
 import json
 import os
 import re
 from datetime import datetime, timezone
+from pathlib import Path
 
+from data_dir import get_data_dir
 from recipes import RECIPE_DATABASE, filter_recipes, get_recipe_by_name
 
 
@@ -24,7 +27,9 @@ def _to_title_case(text):
 class MealPlanner:
     """Handle meal planning and grocery list generation."""
 
-    def __init__(self, filename="meal_plans.json"):
+    def __init__(self, filename=None):
+        if filename is None:
+            filename = str(get_data_dir() / "meal_plans.json")
         self.filename = filename
         self.meal_plan = self.load_meal_plan()
 
@@ -214,11 +219,50 @@ class MealPlanner:
 
         return grocery_list
 
+    @staticmethod
+    def export_grocery_list(grocery_list, path_base):
+        """Write the grocery list as ``<path_base>.csv`` and ``<path_base>.md``.
+
+        Items are grouped by category, sorted by name within each category.
+        Returns (csv_path, md_path).
+        """
+        base = Path(str(path_base))
+        csv_path = Path(f"{base}.csv")
+        md_path = Path(f"{base}.md")
+
+        with open(csv_path, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["category", "item", "quantity", "unit"])
+            for category, items in grocery_list.items():
+                for item in sorted(items, key=lambda x: x.get("item", "")):
+                    writer.writerow(
+                        [
+                            category,
+                            item.get("item", ""),
+                            item.get("quantity", 0),
+                            item.get("unit", "recipe-use"),
+                        ]
+                    )
+
+        lines = ["# Grocery List"]
+        for category, items in grocery_list.items():
+            lines.append("")
+            lines.append(f"## {category}")
+            for item in sorted(items, key=lambda x: x.get("item", "")):
+                quantity = item.get("quantity", 1)
+                unit = item.get("unit", "")
+                lines.append(f"- [ ] {item.get('item', '')} ({quantity} {unit})")
+        md_path.write_text("\n".join(lines) + "\n")
+
+        return csv_path, md_path
+
 
 class PantryManager:
     """Manage pantry inventory with quantities and expiry dates."""
 
-    def __init__(self, filename="pantry_inventory.json"):
+    def __init__(self, filename=None):
+        if filename is None:
+            filename = str(get_data_dir() / "pantry_inventory.json")
         self.filename = filename
         self.items = self.load_items()
 
@@ -313,7 +357,9 @@ class PantryManager:
 class SavedRecipes:
     """Manage user's saved favorite recipes."""
 
-    def __init__(self, filename="saved_recipes.json"):
+    def __init__(self, filename=None):
+        if filename is None:
+            filename = str(get_data_dir() / "saved_recipes.json")
         self.filename = filename
         self.saved = self.load_saved()
 

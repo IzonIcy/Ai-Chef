@@ -47,6 +47,17 @@ class Clock:
         return week_start.isoformat()
 
 
+@pytest.fixture(autouse=True)
+def hermetic_data_dir(tmp_path, monkeypatch):
+    """Point the app data dir at a per-test temp dir.
+
+    Classes defaulting to get_data_dir() must never touch the real
+    ~/.local/share/ai-chef from tests — state there would leak between runs.
+    """
+    monkeypatch.setenv("AI_CHEF_DATA_DIR", str(tmp_path / "ai-chef-data"))
+    return tmp_path / "ai-chef-data"
+
+
 @pytest.fixture
 def clock(monkeypatch):
     """Freeze datetime for meal_planner and gamification at a fixed Monday."""

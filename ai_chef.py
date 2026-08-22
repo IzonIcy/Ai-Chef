@@ -5,6 +5,7 @@ A command-line based application to help you discover recipes, plan meals, and t
 """
 
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from rich import box
@@ -21,7 +22,16 @@ from ai_generator import (
 )
 from gamification import GamificationManager
 from meal_planner import MealPlanner, PantryManager, SavedRecipes
-from recipes import RECIPE_DATABASE, filter_recipes, find_recipes_by_ingredients
+from recipes import (
+    RECIPE_DATABASE,
+    add_user_recipe,
+    filter_recipes,
+    find_recipes_by_ingredients,
+    get_recipe_by_name,
+    load_user_recipes,
+    remove_user_recipe,
+    scale_recipe,
+)
 
 load_dotenv()
 
@@ -625,6 +635,12 @@ def meal_planning_menu():
                     f"  □ {item.get('item', 'Unknown')} ({item.get('quantity', 1)} {item.get('unit', 'recipe-use')})"
                 )
 
+        if Confirm.ask("\nExport grocery list?", default=False):
+            csv_path, md_path = MealPlanner.export_grocery_list(
+                grocery_list, Path("grocery-list")
+            )
+            console.print(f"[green]✓ Wrote {csv_path} and {md_path}[/green]")
+
     elif choice == "4":
         console.print("\nAvailable recipes:")
         for idx, recipe in enumerate(RECIPE_DATABASE[:10], 1):
@@ -678,6 +694,7 @@ def saved_recipes_menu():
             idx = int(recipe_num) - 1
             if 0 <= idx < len(saved):
                 display_recipe(saved[idx])
+                maybe_show_scaled(saved[idx])
         except ValueError:
             console.print("[red]Invalid selection.[/red]")
 
@@ -750,6 +767,7 @@ def browse_all_recipes():
             idx = int(recipe_num) - 1
             if 0 <= idx < len(filtered):
                 display_recipe(filtered[idx])
+                maybe_show_scaled(filtered[idx])
 
                 if Confirm.ask("Save this recipe?"):
                     saved_recipes = SavedRecipes()
@@ -757,6 +775,107 @@ def browse_all_recipes():
                         console.print("[green]✓ Recipe saved![/green]")
         except ValueError:
             console.print("[red]Invalid selection.[/red]")
+
+
+def maybe_show_scaled(recipe):
+    """Optionally display a recipe scaled by a user-provided multiplier."""
+    scale_input = Prompt.ask(
+        "\nScale servings? Enter multiplier (Enter to skip)", default=""
+    )
+    if not scale_input.strip():
+        return
+    try:
+        factor = float(scale_input)
+    except ValueError:
+        console.print("[yellow]Not a number. Showing original recipe.[/yellow]")
+        return
+    if factor <= 0:
+        console.print("[yellow]Scale factor must be positive.[/yellow]")
+        return
+    display_recipe(scale_recipe(recipe, factor))
+
+
+def add_user_recipe_menu():
+    """Menu for adding a custom recipe."""
+    console.print("\n[bold yellow]➕ Add Your Own Recipe[/bold yellow]\n")
+
+    name = Prompt.ask("Recipe name").strip()
+    if not name:
+        console.print("[yellow]Recipe needs a name.[/yellow]")
+        return
+    if get_recipe_by_name(name):
+        console.print(f"[yellow]A recipe named '{name}' already exists.[/yellow]")
+        return
+
+    cuisine = Prompt.ask("Cuisine type", default="Custom").strip() or "Custom"
+    difficulty = Prompt.ask(
+        "Difficulty level", choices=["easy", "medium", "hard"], default="easy"
+    ).lower()
+
+    cook_time = parse_optional_int(Prompt.ask("Cook time in minutes", default="30"))
+    if cook_time is None or cook_time <= 0:
+        cook_time = 30
+
+    servings = parse_optional_int(Prompt.ask("Servings", default="2"))
+    if servings is None or servings <= 0:
+        servings = 2
+
+    dietary_input = Prompt.ask("Dietary tags (comma-separated)", default="")
+    dietary = [d.strip() for d in dietary_input.split(",") if d.strip()]
+
+    ingredients_input = Prompt.ask("Ingredients (comma-separated)").strip()
+    ingredients = [i.strip() for i in ingredients_input.split(",") if i.strip()]
+    if not ingredients:
+        console.print("[yellow]A recipe needs at least one ingredient.[/yellow]")
+        return
+
+    console.print("[dim]Instructions — one step per line, empty line to finish:[/dim]")
+    instructions = []
+    while True:
+        step = Prompt.ask(f"  Step {len(instructions) + 1}", default="")
+        if not step.strip():
+            break
+        instructions.append(step.strip())
+    if not instructions:
+        console.print("[yellow]A recipe needs at least one instruction.[/yellow]")
+        return
+
+    recipe = {
+        "name": name,
+        "ingredients": ingredients,
+        "cook_time": cook_time,
+        "difficulty": difficulty,
+        "cuisine": cuisine,
+        "dietary": dietary,
+        "servings": servings,
+        "instructions": instructions,
+    }
+    if add_user_recipe(recipe):
+        console.print(f"[green]✓ Saved '{name}' to your recipes.[/green]")
+    else:
+        console.print(f"[yellow]A recipe named '{name}' already exists.[/yellow]")
+
+
+def remove_user_recipe_menu():
+    """Menu for removing a user-defined recipe."""
+    console.print("\n[bold yellow]🗑️ Remove a User Recipe[/bold yellow]\n")
+
+    user_recipes = load_user_recipes()
+    if not user_recipes:
+        console.print("[yellow]You have no user recipes yet.[/yellow]")
+        return
+
+    for idx, recipe in enumerate(user_recipes, 1):
+        console.print(f"{idx}. {recipe.get('name', 'Unknown')}")
+
+    choice_input = Prompt.ask("\nEnter number to remove (Enter to cancel)", default="")
+    idx = parse_optional_int(choice_input)
+    if idx is None or not (1 <= idx <= len(user_recipes)):
+        return
+
+    removed = user_recipes[idx - 1]
+    if remove_user_recipe(removed.get("name", "")):
+        console.print(f"[green]✓ Removed '{removed.get('name')}'.[/green]")
 
 
 def main_menu():
@@ -774,12 +893,28 @@ def main_menu():
         console.print("[cyan]8.[/cyan] 📊 Gamification status")
         console.print("[cyan]9.[/cyan] 💡 AI cooking tips")
         console.print("[cyan]10.[/cyan] 🔁 Ingredient substitutions")
-        console.print("[cyan]11.[/cyan] 🚪 Exit")
+        console.print("[cyan]11.[/cyan] ➕ Add your own recipe")
+        console.print("[cyan]12.[/cyan] 🗑️ Remove a user recipe")
+        console.print("[cyan]13.[/cyan] 🚪 Exit")
         console.print("[bold cyan]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold cyan]")
 
         choice = Prompt.ask(
             "\nSelect an option",
-            choices=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],
+            choices=[
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "10",
+                "11",
+                "12",
+                "13",
+            ],
         )
 
         if choice == "1":
@@ -803,6 +938,10 @@ def main_menu():
         elif choice == "10":
             ingredient_substitutions_menu()
         elif choice == "11":
+            add_user_recipe_menu()
+        elif choice == "12":
+            remove_user_recipe_menu()
+        elif choice == "13":
             console.print(
                 "\n[bold cyan]Thanks for using AI Chef! Happy cooking! 👨‍🍳[/bold cyan]\n"
             )
