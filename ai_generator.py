@@ -14,6 +14,9 @@ load_dotenv()
 # Initialize client as None, will be created when needed
 client = None
 
+# Modern default; gpt-3.5-turbo is a deprecated legacy model.
+DEFAULT_MODEL = "gpt-4o-mini"
+
 
 def _get_client():
     """Get or create OpenAI client."""
@@ -23,6 +26,11 @@ def _get_client():
         if api_key:
             client = OpenAI(api_key=api_key)
     return client
+
+
+def _get_model():
+    """Resolve the model to use: OPENAI_MODEL env override, else DEFAULT_MODEL."""
+    return os.getenv("OPENAI_MODEL") or DEFAULT_MODEL
 
 
 def generate_recipe_with_ai(
@@ -83,7 +91,7 @@ def generate_recipe_with_ai(
         last_parse_error = None
         for attempt in range(2):
             response = client_instance.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=_get_model(),
                 messages=[
                     {
                         "role": "system",
@@ -266,7 +274,7 @@ def get_cooking_tips(recipe_name, dietary_preferences=None):
             return "Unable to generate tips: OpenAI API key not set"
 
         response = client_instance.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=_get_model(),
             messages=[
                 {
                     "role": "system",
@@ -302,7 +310,7 @@ def suggest_substitutions(ingredient):
             return "Unable to suggest substitutions: OpenAI API key not set"
 
         response = client_instance.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model=_get_model(),
             messages=[
                 {
                     "role": "system",

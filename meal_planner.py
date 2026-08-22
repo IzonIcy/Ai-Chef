@@ -7,7 +7,7 @@ import os
 import re
 from datetime import datetime, timezone
 
-from recipes import RECIPE_DATABASE, filter_recipes
+from recipes import RECIPE_DATABASE, filter_recipes, get_recipe_by_name
 
 
 def _normalize_ingredient_name(ingredient):
@@ -107,12 +107,8 @@ class MealPlanner:
         if plan_date not in self.meal_plan:
             self.meal_plan[plan_date] = {}
 
-        # Find the recipe
-        recipe = None
-        for r in RECIPE_DATABASE:
-            if r["name"].lower() == recipe_name.lower():
-                recipe = r
-                break
+        # Find the recipe (case-insensitive)
+        recipe = get_recipe_by_name(recipe_name)
 
         if recipe:
             self.meal_plan[plan_date][day] = {
@@ -148,20 +144,17 @@ class MealPlanner:
         # Collect and count all ingredients across planned meals
         ingredient_counts = {}
         for meal_info in week_plan.values():
-            recipe_name = meal_info["recipe"]
-            # Find the recipe in database
-            for recipe in RECIPE_DATABASE:
-                if recipe["name"] == recipe_name:
-                    for ingredient in recipe["ingredients"]:
-                        key = _normalize_ingredient_name(ingredient)
-                        if key not in ingredient_counts:
-                            ingredient_counts[key] = {
-                                "item": _to_title_case(key),
-                                "quantity": 0,
-                                "unit": "recipe-use",
-                            }
-                        ingredient_counts[key]["quantity"] += 1
-                    break
+            recipe = get_recipe_by_name(meal_info["recipe"])
+            if recipe:
+                for ingredient in recipe["ingredients"]:
+                    key = _normalize_ingredient_name(ingredient)
+                    if key not in ingredient_counts:
+                        ingredient_counts[key] = {
+                            "item": _to_title_case(key),
+                            "quantity": 0,
+                            "unit": "recipe-use",
+                        }
+                    ingredient_counts[key]["quantity"] += 1
 
         # Categorize ingredients (simple categorization)
         categories = {

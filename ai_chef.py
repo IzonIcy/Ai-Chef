@@ -39,6 +39,33 @@ def parse_optional_int(value):
         return None
 
 
+def save_recipe_and_record(
+    recipe,
+    cuisine=None,
+    cooking_time=None,
+    is_vegetarian=False,
+    is_vegan=False,
+):
+    """Save a recipe to favorites and record it as cooked.
+
+    Returns True if the recipe was newly saved. Prints nothing when the
+    recipe was already saved, so callers can decide how to report that.
+    """
+    if not SavedRecipes().add_recipe(recipe):
+        return False
+
+    console.print("[green]✓ Recipe saved![/green]")
+    gamification.record_recipe_cooked(
+        recipe_name=recipe.get("name", "Unknown"),
+        cuisine=cuisine,
+        cooking_time=cooking_time,
+        is_vegetarian=is_vegetarian,
+        is_vegan=is_vegan,
+    )
+    console.print("[cyan]📈 Gamification updated![/cyan]")
+    return True
+
+
 def display_banner():
     """Display welcome banner."""
     banner = """
@@ -251,25 +278,19 @@ def find_recipes_menu():
 
                 # Option to save
                 if Confirm.ask("Save this recipe to favorites?"):
-                    saved_recipes = SavedRecipes()
-                    if saved_recipes.add_recipe(recipe):
-                        console.print("[green]✓ Recipe saved![/green]")
-                        # Record gamification
-                        is_veg = "vegetarian" in [
-                            d.lower() for d in recipe.get("dietary", [])
-                        ]
-                        is_vegan = "vegan" in [
-                            d.lower() for d in recipe.get("dietary", [])
-                        ]
-                        gamification.record_recipe_cooked(
-                            recipe_name=recipe["name"],
-                            cuisine=recipe.get("cuisine"),
-                            cooking_time=recipe.get("cook_time"),
-                            is_vegetarian=is_veg,
-                            is_vegan=is_vegan,
-                        )
-                        console.print("[cyan]📈 Gamification updated![/cyan]")
-                    else:
+                    # Record gamification
+                    is_veg = "vegetarian" in [
+                        d.lower() for d in recipe.get("dietary", [])
+                    ]
+                    is_vegan = "vegan" in [d.lower() for d in recipe.get("dietary", [])]
+                    newly_saved = save_recipe_and_record(
+                        recipe,
+                        cuisine=recipe.get("cuisine"),
+                        cooking_time=recipe.get("cook_time"),
+                        is_vegetarian=is_veg,
+                        is_vegan=is_vegan,
+                    )
+                    if not newly_saved:
                         console.print("[yellow]Recipe already in favorites.[/yellow]")
         except ValueError:
             console.print("[red]Invalid selection.[/red]")
@@ -340,20 +361,16 @@ def ai_recipe_menu():
 
     # Option to save
     if Confirm.ask("Save this AI-generated recipe?"):
-        saved_recipes = SavedRecipes()
-        if saved_recipes.add_recipe(recipe):
-            console.print("[green]✓ Recipe saved![/green]")
-            # Record gamification
-            is_veg = dietary and "vegetarian" in dietary.lower()
-            is_vegan = dietary and "vegan" in dietary.lower()
-            gamification.record_recipe_cooked(
-                recipe_name=recipe.get("name", "AI Recipe"),
-                cuisine=cuisine,
-                cooking_time=cook_time,
-                is_vegetarian=bool(is_veg),
-                is_vegan=bool(is_vegan),
-            )
-            console.print("[cyan]📈 Gamification updated![/cyan]")
+        # Record gamification
+        is_veg = dietary and "vegetarian" in dietary.lower()
+        is_vegan = dietary and "vegan" in dietary.lower()
+        save_recipe_and_record(
+            recipe,
+            cuisine=cuisine,
+            cooking_time=cook_time,
+            is_vegetarian=bool(is_veg),
+            is_vegan=bool(is_vegan),
+        )
 
 
 def ai_cooking_tips_menu():
@@ -523,6 +540,22 @@ def pantry_menu():
         console.print(table)
 
 
+def _render_plan_table(plan):
+    """Build the Day/Recipe/Cook Time/Servings table for a meal plan."""
+    plan_table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
+    plan_table.add_column("Day", style="yellow", width=12)
+    plan_table.add_column("Recipe", style="white")
+    plan_table.add_column("Cook Time", justify="center")
+    plan_table.add_column("Servings", justify="center")
+
+    for day, meal in plan.items():
+        plan_table.add_row(
+            day, meal["recipe"], f"{meal['cook_time']} min", str(meal["servings"])
+        )
+
+    return plan_table
+
+
 def meal_planning_menu():
     """Menu for meal planning."""
     console.print("\n[bold yellow]📅 Meal Planning[/bold yellow]\n")
@@ -555,16 +588,7 @@ def meal_planning_menu():
         )
 
         # Display plan
-        plan_table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
-        plan_table.add_column("Day", style="yellow", width=12)
-        plan_table.add_column("Recipe", style="white")
-        plan_table.add_column("Cook Time", justify="center")
-        plan_table.add_column("Servings", justify="center")
-
-        for day, meal in week_plan.items():
-            plan_table.add_row(
-                day, meal["recipe"], f"{meal['cook_time']} min", str(meal["servings"])
-            )
+        plan_table = _render_plan_table(week_plan)
 
         console.print("\n[bold green]Your Weekly Meal Plan:[/bold green]\n")
         console.print(plan_table)
@@ -578,16 +602,7 @@ def meal_planning_menu():
             return
 
         # Display plan
-        plan_table = Table(show_header=True, header_style="bold cyan", box=box.ROUNDED)
-        plan_table.add_column("Day", style="yellow", width=12)
-        plan_table.add_column("Recipe", style="white")
-        plan_table.add_column("Cook Time", justify="center")
-        plan_table.add_column("Servings", justify="center")
-
-        for day, meal in current_plan.items():
-            plan_table.add_row(
-                day, meal["recipe"], f"{meal['cook_time']} min", str(meal["servings"])
-            )
+        plan_table = _render_plan_table(current_plan)
 
         console.print("\n[bold green]Your Current Meal Plan:[/bold green]\n")
         console.print(plan_table)
@@ -798,9 +813,6 @@ def main():
     """Main application entry point."""
     display_banner()
     console.print("[dim]Making cooking easier, one recipe at a time...[/dim]\n")
-
-    # Load environment variables
-    load_dotenv()
 
     # Check for API key
     if not os.getenv("OPENAI_API_KEY"):

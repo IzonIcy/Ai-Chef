@@ -52,7 +52,8 @@ class CookingStreak:
         is_vegan: bool = False,
     ):
         """Record that a meal was cooked today."""
-        today = datetime.now(timezone.utc).date().isoformat()
+        today_date = datetime.now(timezone.utc).date()
+        today = today_date.isoformat()
         last_date = self.data.get("last_cooked_date")
 
         self.data["total_meals_cooked"] += 1
@@ -63,7 +64,6 @@ class CookingStreak:
             self.data["last_cooked_date"] = today
         else:
             last_cooked = datetime.fromisoformat(last_date).date()
-            today_date = datetime.now(timezone.utc).date()
             days_diff = (today_date - last_cooked).days
 
             if days_diff == 0:
