@@ -3,13 +3,12 @@ Meal planning and grocery list generation
 """
 
 import csv
-import json
-import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
 
 from data_dir import get_data_dir
+from json_store import load_json, save_json_atomic
 from recipes import RECIPE_DATABASE, filter_recipes, get_recipe_by_name
 
 
@@ -34,19 +33,14 @@ class MealPlanner:
         self.meal_plan = self.load_meal_plan()
 
     def load_meal_plan(self):
-        """Load existing meal plan from file."""
-        if os.path.exists(self.filename):
-            try:
-                with open(self.filename, "r") as f:
-                    return json.load(f)
-            except (OSError, json.JSONDecodeError):
-                return {}
+        """Load meal plan from file."""
+        plan = load_json(self.filename, {})
+        return plan if isinstance(plan, dict) else {}
         return {}
 
     def save_meal_plan(self):
         """Save meal plan to file."""
-        with open(self.filename, "w") as f:
-            json.dump(self.meal_plan, f, indent=2)
+        save_json_atomic(self.filename, self.meal_plan)
 
     def create_weekly_plan(self, dietary_preference=None, max_cook_time=None):
         """
@@ -268,18 +262,12 @@ class PantryManager:
 
     def load_items(self):
         """Load pantry items from file."""
-        if os.path.exists(self.filename):
-            try:
-                with open(self.filename, "r") as f:
-                    return json.load(f)
-            except (OSError, json.JSONDecodeError):
-                return []
-        return []
+        items = load_json(self.filename, [])
+        return items if isinstance(items, list) else []
 
     def save_items(self):
         """Save pantry items to file."""
-        with open(self.filename, "w") as f:
-            json.dump(self.items, f, indent=2)
+        save_json_atomic(self.filename, self.items)
 
     def add_item(self, name, quantity=1, unit="item", expires_on=None):
         """Add or update a pantry item."""
@@ -365,18 +353,12 @@ class SavedRecipes:
 
     def load_saved(self):
         """Load saved recipes from file."""
-        if os.path.exists(self.filename):
-            try:
-                with open(self.filename, "r") as f:
-                    return json.load(f)
-            except (OSError, json.JSONDecodeError):
-                return []
-        return []
+        saved = load_json(self.filename, [])
+        return saved if isinstance(saved, list) else []
 
     def save_to_file(self):
         """Save recipes to file."""
-        with open(self.filename, "w") as f:
-            json.dump(self.saved, f, indent=2)
+        save_json_atomic(self.filename, self.saved)
 
     def add_recipe(self, recipe):
         """Add a recipe to saved favorites."""

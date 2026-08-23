@@ -968,6 +968,10 @@ def main():
         console.print("\n\n[bold cyan]Goodbye! 👋[/bold cyan]\n")
     except Exception as e:  # noqa: BLE001 - never crash the CLI, print a friendly error
         console.print(f"\n[red]An error occurred: {e!s}[/red]\n")
+        # The friendly message alone makes bugs undebuggable from user
+        # reports; keep the full trace available without making it noisy.
+        if os.getenv("AI_CHEF_DEBUG"):
+            console.print_exception(show_locals=False)
 
 
 if __name__ == "__main__":

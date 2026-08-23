@@ -3,12 +3,11 @@ Gamification system for AI Chef
 Tracks cooking streaks, badges/achievements, and weekly challenges
 """
 
-import json
-import os
 from datetime import datetime, timedelta, timezone
 from typing import ClassVar
 
 from data_dir import get_data_dir
+from json_store import load_json, save_json_atomic
 
 
 class CookingStreak:
@@ -22,13 +21,7 @@ class CookingStreak:
 
     def load_streak(self):
         """Load streak data from file."""
-        if os.path.exists(self.filename):
-            try:
-                with open(self.filename, "r") as f:
-                    return json.load(f)
-            except (OSError, json.JSONDecodeError):
-                return self._default_data()
-        return self._default_data()
+        return load_json(self.filename, self._default_data())
 
     def _default_data(self):
         """Return default streak data structure."""
@@ -45,8 +38,7 @@ class CookingStreak:
 
     def save_streak(self):
         """Save streak data to file."""
-        with open(self.filename, "w") as f:
-            json.dump(self.data, f, indent=2)
+        save_json_atomic(self.filename, self.data)
 
     def record_meal_cooked(
         self,
@@ -194,14 +186,10 @@ class AchievementTracker:
 
     def load_achievements(self):
         """Load achievements from file."""
-        if os.path.exists(self.filename):
-            try:
-                with open(self.filename, "r") as f:
-                    data = json.load(f)
-                    return {aid: Achievement(**a) for aid, a in data.items()}
-            except (OSError, json.JSONDecodeError):
-                return self._default_achievements()
-        return self._default_achievements()
+        data = load_json(self.filename, None)
+        if not isinstance(data, dict):
+            return self._default_achievements()
+        return {aid: Achievement(**a) for aid, a in data.items()}
 
     def _default_achievements(self):
         """Return all achievements in unlocked=False state."""
@@ -210,8 +198,7 @@ class AchievementTracker:
     def save_achievements(self):
         """Save achievements to file."""
         data = {aid: a.to_dict() for aid, a in self.achievements.items()}
-        with open(self.filename, "w") as f:
-            json.dump(data, f, indent=2)
+        save_json_atomic(self.filename, data)
 
     def unlock_achievement(self, achievement_id: str) -> bool:
         """Unlock an achievement if it exists and isn't already unlocked."""
@@ -271,13 +258,10 @@ class WeeklyChallenges:
 
     def load_challenges(self):
         """Load weekly challenges from file."""
-        if os.path.exists(self.filename):
-            try:
-                with open(self.filename, "r") as f:
-                    return json.load(f)
-            except (OSError, json.JSONDecodeError):
-                return self._reset_challenges()
-        return self._reset_challenges()
+        data = load_json(self.filename, None)
+        if not isinstance(data, dict) or "challenges" not in data:
+            return self._reset_challenges()
+        return data
 
     def _reset_challenges(self):
         """Reset challenges for the week."""
@@ -298,8 +282,7 @@ class WeeklyChallenges:
 
     def save_challenges(self):
         """Save challenges to file."""
-        with open(self.filename, "w") as f:
-            json.dump(self.challenges, f, indent=2)
+        save_json_atomic(self.filename, self.challenges)
 
     def check_week_reset(self):
         """Check if a new week has started and reset if needed."""

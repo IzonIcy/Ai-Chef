@@ -24,7 +24,7 @@ def _get_client():
     if client is None:
         api_key = os.getenv("OPENAI_API_KEY")
         if api_key:
-            client = OpenAI(api_key=api_key)
+            client = OpenAI(api_key=api_key, timeout=60.0)
     return client
 
 

@@ -2,10 +2,10 @@
 Recipe database with ingredient-based search functionality
 """
 
-import json
 import re
 
 from data_dir import get_data_dir
+from json_store import load_json, save_json_atomic
 
 
 def _user_recipes_path():
@@ -15,12 +15,7 @@ def _user_recipes_path():
 def load_user_recipes():
     """Load user-defined recipes from the data directory."""
     path = _user_recipes_path()
-    try:
-        data = json.loads(path.read_text())
-    except FileNotFoundError:
-        return []
-    except (OSError, json.JSONDecodeError):
-        return []
+    data = load_json(path, [])
     if not isinstance(data, list):
         return []
     return [recipe for recipe in data if isinstance(recipe, dict)]
@@ -28,8 +23,7 @@ def load_user_recipes():
 
 def save_user_recipes(recipes):
     """Persist user-defined recipes to the data directory."""
-    path = _user_recipes_path()
-    path.write_text(json.dumps(recipes, indent=2))
+    save_json_atomic(_user_recipes_path(), recipes)
 
 
 def add_user_recipe(recipe):
