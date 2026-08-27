@@ -3,8 +3,8 @@ Gamification system for AI Chef
 Tracks cooking streaks, badges/achievements, and weekly challenges
 """
 
-from datetime import UTC, datetime, timedelta
 import contextlib
+from datetime import UTC, datetime, timedelta
 from typing import ClassVar
 
 from data_dir import get_data_dir
