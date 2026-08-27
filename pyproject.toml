@@ -33,7 +33,6 @@ ignore = []
 [tool.ruff.format]
 quote-style = "single"
 indent-style = "space"
-indent-width = 4
 
 [tool.mypy]
 python_version = "3.13"
