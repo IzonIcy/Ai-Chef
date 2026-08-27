@@ -1,5 +1,6 @@
 """Behavioral tests for meal_planner.py — weekly plans, groceries, pantry, saves."""
 
+import pytest
 import json
 
 from meal_planner import MealPlanner, PantryManager, SavedRecipes
@@ -58,34 +59,60 @@ def test_create_weekly_plan_persists_plan_for_today(tmp_path, clock):
     assert saved[clock.today_str()] == plan
 
 
-def test_create_weekly_plan_falls_back_to_all_recipes_when_filter_is_too_small(
-    tmp_path, clock
-):
-    # Only one vegan recipe exists (< 7), so the planner falls back to the
-    # full database rather than returning a short plan.
+def test_create_weekly_plan_repeats_matches_instead_of_violating_diet(tmp_path, clock):
+    # Only one vegan recipe exists (< 7). The plan must repeat it across
+    # the week rather than silently pulling in non-vegan recipes.
     planner = MealPlanner(filename=str(tmp_path / "plan.json"))
 
     plan = planner.create_weekly_plan(dietary_preference="vegan")
 
     assert len(plan) == 7
-    # Fallback means non-vegan recipes slip back into the plan
-    assert any("Beef Tacos" == day_info["recipe"] for day_info in plan.values())
+    assert all("Beef Tacos" != day_info["recipe"] for day_info in plan.values())
 
 
-def test_create_weekly_plan_with_restrictive_cook_time_still_returns_seven_days(
-    tmp_path, clock
-):
-    # Only 4 recipes fit in 20 minutes (< 7), triggering the full-database
-    # fallback even though some picked recipes exceed the limit.
+def test_create_weekly_plan_respects_cook_time_cap_with_repetition(tmp_path, clock):
+    # Only 4 recipes fit in 20 minutes (< 7): repeat them instead of
+    # slipping slower recipes into the plan.
     planner = MealPlanner(filename=str(tmp_path / "plan.json"))
 
     plan = planner.create_weekly_plan(max_cook_time=20)
 
     assert len(plan) == 7
-    assert any(day_info["cook_time"] > 20 for day_info in plan.values()), (
-        "expected fallback to include slower recipes"
-    )
+    assert all(day_info["cook_time"] <= 20 for day_info in plan.values())
 
+
+
+
+def test_export_grocery_list_csv_format(tmp_path):
+    planner = MealPlanner(filename=str(tmp_path / "plan.json"))
+    plan = planner.create_weekly_plan()
+    grocery_list = planner.generate_grocery_list(plan)
+    
+    csv_path = tmp_path / "grocery-test.csv"
+    md_path = tmp_path / "grocery-test.md"
+    MealPlanner.export_grocery_list(grocery_list, csv_path.with_suffix(""))
+    
+    import csv
+    with open(csv_path) as f:
+        reader = csv.DictReader(f)
+        rows = list(reader)
+    assert len(rows) > 0
+    assert "category" in rows[0]
+    assert "item" in rows[0]
+    assert "quantity" in rows[0]
+    assert "unit" in rows[0]
+
+def test_export_grocery_list_markdown_format(tmp_path):
+    planner = MealPlanner(filename=str(tmp_path / "plan.json"))
+    plan = planner.create_weekly_plan()
+    grocery_list = planner.generate_grocery_list(plan)
+    
+    md_path = tmp_path / "groccery-test.md"
+    MealPlanner.export_grocery_list(grocery_list, md_path.with_suffix(""))
+    
+    md_content = md_path.read_text()
+    assert "- [ ] " in md_content
+    assert "## " in md_content
 
 # ---------------------------------------------------------------------------
 # MealPlanner.add_meal_to_plan / get_current_plan
@@ -271,8 +298,10 @@ def test_pantry_expiring_items_sorted_by_days_left(tmp_path, clock):
 
 def test_pantry_expiring_items_skips_malformed_dates(tmp_path, clock):
     pantry = PantryManager(filename=str(tmp_path / "pantry.json"))
-    pantry.add_item("milk", expires_on="not-a-date")
+    with pytest.raises(ValueError, match="YYYY-MM-DD"):
+        pantry.add_item("milk", expires_on="not-a-date")
 
+    # Malformed dates are rejected at add time, so nothing expires
     assert pantry.get_expiring_items() == []
 
 

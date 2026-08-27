@@ -1,0 +1,46 @@
+[project]
+name = "ai-chef"
+version = "1.0.0"
+description = "Terminal recipe finder / AI recipe generator / meal planner / pantry tracker"
+readme = "README.md"
+requires-python = ">=3.13"
+license = {text = "MIT"}
+authors = [{name = "Ryan Bahadori", email = "ryanbahadori74@gmail.com"}]
+dependencies = [
+    "openai>=3.2.0,<4.0",
+    "python-dotenv>=1.0,<2.0",
+    "rich>=13.0,<14.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9.0",
+    "ruff>=0.16,<1.0",
+    "mypy>=1.10,<2.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+select = ["E", "F", "I", "W", "C90", "UP", "B", "SIM", "T20"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+indent-width = 4
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"

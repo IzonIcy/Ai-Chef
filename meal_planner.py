@@ -36,7 +36,6 @@ class MealPlanner:
         """Load meal plan from file."""
         plan = load_json(self.filename, {})
         return plan if isinstance(plan, dict) else {}
-        return {}
 
     def save_meal_plan(self):
         """Save meal plan to file."""
@@ -58,7 +57,10 @@ class MealPlanner:
             cook_time=max_cook_time, dietary=dietary_preference
         )
 
-        if len(available_recipes) < 7:
+        # Fewer than 7 matches is fine: repeat them across the week rather
+        # than silently dropping the user's dietary/time constraints. Only
+        # an empty match set forces the full database as a last resort.
+        if not available_recipes:
             available_recipes = RECIPE_DATABASE  # Fall back to all recipes
 
         # Create a balanced plan - try to vary cuisines
@@ -271,6 +273,12 @@ class PantryManager:
 
     def add_item(self, name, quantity=1, unit="item", expires_on=None):
         """Add or update a pantry item."""
+        # Validate expires_on format if provided
+        if expires_on:
+            try:
+                datetime.strptime(expires_on, "%Y-%m-%d")
+            except ValueError:
+                raise ValueError("expires_on must be in YYYY-MM-DD format")
         normalized_name = _normalize_ingredient_name(name)
         for item in self.items:
             if _normalize_ingredient_name(item.get("name", "")) == normalized_name:

@@ -20,8 +20,13 @@ class CookingStreak:
         self.data = self.load_streak()
 
     def load_streak(self):
-        """Load streak data from file."""
-        return load_json(self.filename, self._default_data())
+        """Load streak data from file, backfilling any keys a partial or
+        hand-edited file is missing."""
+        data = load_json(self.filename, None)
+        defaults = self._default_data()
+        if not isinstance(data, dict):
+            return defaults
+        return {**defaults, **{k: v for k, v in data.items() if k in defaults}}
 
     def _default_data(self):
         """Return default streak data structure."""
@@ -185,11 +190,20 @@ class AchievementTracker:
         self.achievements = self.load_achievements()
 
     def load_achievements(self):
-        """Load achievements from file."""
+        """Load achievements from file, falling back to defaults on any
+        entry that doesn't match the Achievement shape (the file lives in
+        the user's data dir and may be hand-edited or truncated)."""
         data = load_json(self.filename, None)
         if not isinstance(data, dict):
             return self._default_achievements()
-        return {aid: Achievement(**a) for aid, a in data.items()}
+        achievements = self._default_achievements()
+        for aid, a in data.items():
+            if aid in achievements:
+                try:
+                    achievements[aid] = Achievement(**a)
+                except (TypeError, KeyError):
+                    pass
+        return achievements
 
     def _default_achievements(self):
         """Return all achievements in unlocked=False state."""
@@ -272,6 +286,7 @@ class WeeklyChallenges:
                 {**challenge, "progress": 0, "completed": False}
                 for challenge in self.CHALLENGES
             ],
+            "cooked_recipes": [],
         }
 
     def _get_week_start(self):
@@ -291,14 +306,27 @@ class WeeklyChallenges:
             self.challenges = self._reset_challenges()
             self.save_challenges()
 
-    def update_challenge_progress(self, challenge_id: str, increment: int = 1):
-        """Update progress on a challenge."""
+    def update_challenge_progress(
+        self, challenge_id: str, increment: int = 1, recipe_name: str | None = None
+    ):
+        """Update progress on a challenge.
+
+        For 'cook_five', only counts distinct recipes when recipe_name is provided.
+        """
         self.check_week_reset()
         for challenge in self.challenges["challenges"]:
             if challenge["id"] == challenge_id and not challenge["completed"]:
-                challenge["progress"] += increment
-                if challenge["progress"] >= challenge["target"]:
-                    challenge["completed"] = True
+                if challenge_id == "cook_five" and recipe_name:
+                    # Only count distinct recipes
+                    if recipe_name not in self.challenges["cooked_recipes"]:
+                        self.challenges["cooked_recipes"].append(recipe_name)
+                        challenge["progress"] += 1
+                        if challenge["progress"] >= challenge["target"]:
+                            challenge["completed"] = True
+                else:
+                    challenge["progress"] += increment
+                    if challenge["progress"] >= challenge["target"]:
+                        challenge["completed"] = True
                 self.save_challenges()
                 break
 
@@ -402,8 +430,8 @@ class GamificationManager:
             if cuisine_counts.get(cuisine_key, 0) == 1:
                 self.challenges.update_challenge_progress("try_new_cuisine")
 
-        # Update weekly challenges
-        self.challenges.update_challenge_progress("cook_five")
+        # Update weekly challenges (counts distinct recipes)
+        self.challenges.update_challenge_progress("cook_five", recipe_name=recipe_name)
 
     def get_gamification_status(self):
         """Get complete gamification status."""

@@ -5,7 +5,6 @@ A command-line based application to help you discover recipes, plan meals, and t
 """
 
 import os
-from pathlib import Path
 
 from dotenv import load_dotenv
 from rich import box
@@ -20,6 +19,7 @@ from ai_generator import (
     get_cooking_tips,
     suggest_substitutions,
 )
+from data_dir import get_data_dir
 from gamification import GamificationManager
 from meal_planner import MealPlanner, PantryManager, SavedRecipes
 from recipes import (
@@ -636,8 +636,9 @@ def meal_planning_menu():
                 )
 
         if Confirm.ask("\nExport grocery list?", default=False):
+            export_base = get_data_dir() / "grocery-list"
             csv_path, md_path = MealPlanner.export_grocery_list(
-                grocery_list, Path("grocery-list")
+                grocery_list, export_base
             )
             console.print(f"[green]✓ Wrote {csv_path} and {md_path}[/green]")
 

@@ -25,7 +25,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install ruff mypy pytest
+          # Pinned so CI lint results match local tooling instead of
+          # drifting with each new release.
+          pip install "ruff==0.16.4" "mypy==2.3.1" "pytest==9.1.1"
 
       - name: Lint
         run: ruff check .

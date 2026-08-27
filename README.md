@@ -30,7 +30,7 @@ The recipe finder works without it. The AI generation is the fun part though.
 
 ## Tech
 
-Python 3.13, OpenAI API, Rich for the terminal UI. Recipes live in a JSON file because SQLite felt like overkill for something I can edit by hand.
+Python 3.13, OpenAI API, Rich for the terminal UI. Built-in recipes live in code, your own recipes/plans/pantry live in the XDG data dir (`~/.local/share/ai-chef`) — SQLite felt like overkill for something I can edit by hand.
 
 ## What I learned
 
@@ -38,7 +38,5 @@ This was my first project working with LLM APIs. The most interesting part was p
 
 ## Maybe later
 
-- Save AI recipes to the database
 - Nutritional info
-- Export shopping lists
 - More built-in recipes
