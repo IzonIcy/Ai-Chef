@@ -99,13 +99,17 @@ def display_gamification_status():
         f"\n[bold yellow]🔥 Your Streak: {streak['current_streak']} days[/bold yellow]"
     )
     console.print(
-        f"[dim]Longest streak: {streak['longest_streak']} days | Total meals: {streak['total_meals']}[/dim]"
+
+            f"[dim]Longest streak: {streak['longest_streak']} days | "
+            f"Total meals: {streak['total_meals']}[/dim]"
+
     )
 
     # Display achievements
     if achievements["unlocked"]:
         console.print(
-            f"\n[bold green]🏆 Achievements Unlocked ({len(achievements['unlocked'])}):[/bold green]"
+            f"\n[bold green]🏆 Achievements Unlocked "
+                f"({len(achievements['unlocked'])}):[/bold green]"
         )
         for achievement in achievements["unlocked"]:
             console.print(
@@ -202,7 +206,7 @@ def display_recipe(recipe):
     console.print(f"\n[bold cyan]{'=' * 60}[/bold cyan]\n")
 
 
-def find_recipes_menu():
+def find_recipes_menu():  # noqa: C901  # noqa: C901
     """Menu for finding recipes by ingredients."""
     console.print("\n[bold yellow]🔍 Find Recipes by Ingredients[/bold yellow]\n")
 
@@ -422,7 +426,7 @@ def ingredient_substitutions_menu():
     )
 
 
-def pantry_menu():
+def pantry_menu():  # noqa: C901
     """Menu for pantry inventory and expiry tracking."""
     console.print("\n[bold yellow]🥫 Pantry Manager[/bold yellow]\n")
 
@@ -566,7 +570,7 @@ def _render_plan_table(plan):
     return plan_table
 
 
-def meal_planning_menu():
+def meal_planning_menu():  # noqa: C901
     """Menu for meal planning."""
     console.print("\n[bold yellow]📅 Meal Planning[/bold yellow]\n")
 
@@ -632,7 +636,10 @@ def meal_planning_menu():
             console.print(f"\n[bold cyan]{category}:[/bold cyan]")
             for item in sorted(items, key=lambda x: x.get("item", "")):
                 console.print(
-                    f"  □ {item.get('item', 'Unknown')} ({item.get('quantity', 1)} {item.get('unit', 'recipe-use')})"
+
+                        f"  □ {item.get('item', 'Unknown')} "
+                        f"({item.get('quantity', 1)} {item.get('unit', 'recipe-use')})"
+
                 )
 
         if Confirm.ask("\nExport grocery list?", default=False):
@@ -665,7 +672,10 @@ def saved_recipes_menu():
 
     if not saved:
         console.print(
-            "[yellow]No saved recipes yet. Save some from the recipe finder or AI generator![/yellow]"
+
+                "[yellow]No saved recipes yet. Save some from the recipe "
+                "finder or AI generator![/yellow]"
+
         )
         return
 
@@ -879,7 +889,7 @@ def remove_user_recipe_menu():
         console.print(f"[green]✓ Removed '{removed.get('name')}'.[/green]")
 
 
-def main_menu():
+def main_menu():  # noqa: C901  # noqa: C901
     """Display main menu and handle user choices."""
     while True:
         console.print("\n[bold cyan]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold cyan]")

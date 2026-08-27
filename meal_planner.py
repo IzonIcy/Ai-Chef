@@ -4,7 +4,7 @@ Meal planning and grocery list generation
 
 import csv
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from data_dir import get_data_dir
@@ -96,7 +96,7 @@ class MealPlanner:
             used_recipes.add(recipe["name"])
 
         # Save the plan
-        plan_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        plan_date = datetime.now(UTC).strftime("%Y-%m-%d")
         self.meal_plan[plan_date] = week_plan
         self.save_meal_plan()
 
@@ -104,7 +104,7 @@ class MealPlanner:
 
     def add_meal_to_plan(self, day, recipe_name):
         """Add a specific meal to a specific day."""
-        plan_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        plan_date = datetime.now(UTC).strftime("%Y-%m-%d")
         if plan_date not in self.meal_plan:
             self.meal_plan[plan_date] = {}
 
@@ -123,10 +123,10 @@ class MealPlanner:
 
     def get_current_plan(self):
         """Get the current week's meal plan."""
-        plan_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        plan_date = datetime.now(UTC).strftime("%Y-%m-%d")
         return self.meal_plan.get(plan_date, {})
 
-    def generate_grocery_list(self, week_plan=None):
+    def generate_grocery_list(self, week_plan=None):  # noqa: C901
         """
         Generate a grocery list from the meal plan.
 
@@ -277,8 +277,8 @@ class PantryManager:
         if expires_on:
             try:
                 datetime.strptime(expires_on, "%Y-%m-%d")
-            except ValueError:
-                raise ValueError("expires_on must be in YYYY-MM-DD format")
+            except ValueError as err:
+                raise ValueError("expires_on must be in YYYY-MM-DD format") from err
         normalized_name = _normalize_ingredient_name(name)
         for item in self.items:
             if _normalize_ingredient_name(item.get("name", "")) == normalized_name:
@@ -295,7 +295,7 @@ class PantryManager:
                 "quantity": quantity,
                 "unit": unit or "item",
                 "expires_on": expires_on,
-                "updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+                "updated_at": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S"),
             }
         )
         self.save_items()
@@ -326,7 +326,7 @@ class PantryManager:
     def get_expiring_items(self, within_days=3):
         """Return pantry items that expire within N days."""
         expiring = []
-        today = datetime.now(timezone.utc).date()
+        today = datetime.now(UTC).date()
         for item in self.items:
             expires_on = item.get("expires_on")
             if not expires_on:
@@ -334,7 +334,7 @@ class PantryManager:
             try:
                 expires_date = (
                     datetime.strptime(expires_on, "%Y-%m-%d")
-                    .replace(tzinfo=timezone.utc)
+                    .replace(tzinfo=UTC)
                     .date()
                 )
             except ValueError:
@@ -376,7 +376,7 @@ class SavedRecipes:
                 return False  # Already saved
 
         # Add timestamp
-        recipe["saved_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        recipe["saved_at"] = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
         self.saved.append(recipe)
         self.save_to_file()
         return True

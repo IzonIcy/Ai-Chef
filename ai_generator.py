@@ -33,7 +33,7 @@ def _get_model():
     return os.getenv("OPENAI_MODEL") or DEFAULT_MODEL
 
 
-def generate_recipe_with_ai(
+def generate_recipe_with_ai(  # noqa: C901
     ingredients=None,
     dietary_preference=None,
     cuisine_type=None,
@@ -78,7 +78,11 @@ def generate_recipe_with_ai(
 
     prompt = " ".join(prompt_parts) + "."
     prompt += "\n\nReturn ONLY valid JSON with this exact schema:\n"
-    prompt += '{"name": string, "servings": int, "cook_time": int, "difficulty": "easy|medium|hard", "ingredients": [string], "instructions": [string], "cuisine": string, "dietary": [string]}'
+    prompt += (
+        '{"name": string, "servings": int, "cook_time": int, '
+        '"difficulty": "easy|medium|hard", "ingredients": [string], '
+        '"instructions": [string], "cuisine": string, "dietary": [string]}'
+    )
 
     try:
         client_instance = _get_client()
@@ -95,13 +99,20 @@ def generate_recipe_with_ai(
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are a professional chef who creates delicious, easy-to-follow recipes tailored to user preferences. Output must be valid JSON only.",
+                        "content": (
+                        "You are a professional chef who creates delicious, "
+                        "easy-to-follow recipes tailored to user preferences. "
+                        "Output must be valid JSON only."
+                    ),
                     },
                     {
                         "role": "user",
                         "content": prompt
                         if attempt == 0
-                        else f"Your previous output was not parseable ({last_parse_error}). Return only valid JSON in the exact schema.",
+                        else (
+                f"Your previous output was not parseable ({last_parse_error}). "
+                f"Return only valid JSON in the exact schema."
+            ),
                     },
                 ],
                 temperature=0.7,
@@ -127,7 +138,7 @@ def generate_recipe_with_ai(
         }
 
 
-def parse_ai_recipe(recipe_text):
+def parse_ai_recipe(recipe_text):  # noqa: C901
     """
     Parse the AI-generated recipe text into structured format.
 
@@ -302,7 +313,10 @@ def suggest_substitutions(ingredient):
     Returns:
         str: List of possible substitutions
     """
-    prompt = f"What are good substitutions for {ingredient} in cooking? Provide 3-4 options with brief explanations."
+    prompt = (
+        f"What are good substitutions for {ingredient} in cooking? "
+        f"Provide 3-4 options with brief explanations."
+    )
 
     try:
         client_instance = _get_client()
@@ -314,7 +328,10 @@ def suggest_substitutions(ingredient):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a knowledgeable chef helping with ingredient substitutions.",
+                    "content": (
+                        "You are a knowledgeable chef helping "
+                        "with ingredient substitutions."
+                    ),
                 },
                 {"role": "user", "content": prompt},
             ],

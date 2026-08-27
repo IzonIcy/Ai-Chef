@@ -1,7 +1,8 @@
 """Behavioral tests for meal_planner.py — weekly plans, groceries, pantry, saves."""
 
-import pytest
 import json
+
+import pytest
 
 from meal_planner import MealPlanner, PantryManager, SavedRecipes
 from recipes import RECIPE_DATABASE
@@ -67,7 +68,7 @@ def test_create_weekly_plan_repeats_matches_instead_of_violating_diet(tmp_path, 
     plan = planner.create_weekly_plan(dietary_preference="vegan")
 
     assert len(plan) == 7
-    assert all("Beef Tacos" != day_info["recipe"] for day_info in plan.values())
+    assert all(day_info["recipe"] != "Beef Tacos" for day_info in plan.values())
 
 
 def test_create_weekly_plan_respects_cook_time_cap_with_repetition(tmp_path, clock):
@@ -87,11 +88,10 @@ def test_export_grocery_list_csv_format(tmp_path):
     planner = MealPlanner(filename=str(tmp_path / "plan.json"))
     plan = planner.create_weekly_plan()
     grocery_list = planner.generate_grocery_list(plan)
-    
+
     csv_path = tmp_path / "grocery-test.csv"
-    md_path = tmp_path / "grocery-test.md"
     MealPlanner.export_grocery_list(grocery_list, csv_path.with_suffix(""))
-    
+
     import csv
     with open(csv_path) as f:
         reader = csv.DictReader(f)
@@ -106,10 +106,10 @@ def test_export_grocery_list_markdown_format(tmp_path):
     planner = MealPlanner(filename=str(tmp_path / "plan.json"))
     plan = planner.create_weekly_plan()
     grocery_list = planner.generate_grocery_list(plan)
-    
+
     md_path = tmp_path / "groccery-test.md"
     MealPlanner.export_grocery_list(grocery_list, md_path.with_suffix(""))
-    
+
     md_content = md_path.read_text()
     assert "- [ ] " in md_content
     assert "## " in md_content

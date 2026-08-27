@@ -7,7 +7,7 @@ timestamp that tests can advance explicitly.
 """
 
 import datetime as _real_datetime
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -16,7 +16,7 @@ import meal_planner
 
 # A fixed Monday; avoids weekend/midnight edge cases and keeps week_start
 # calculations stable.
-_DEFAULT_START = datetime(2026, 1, 5, 12, 0, 0, tzinfo=timezone.utc)
+_DEFAULT_START = datetime(2026, 1, 5, 12, 0, 0, tzinfo=_real_datetime.UTC)
 
 
 class Clock:

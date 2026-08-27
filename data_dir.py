@@ -20,9 +20,6 @@ def get_data_dir() -> Path:
         base = Path(override)
     else:
         xdg = os.getenv("XDG_DATA_HOME")
-        if xdg:
-            base = Path(xdg) / "ai-chef"
-        else:
-            base = Path.home() / ".local" / "share" / "ai-chef"
+        base = Path(xdg) / "ai-chef" if xdg else Path.home() / ".local" / "share" / "ai-chef"
     base.mkdir(parents=True, exist_ok=True)
     return base
