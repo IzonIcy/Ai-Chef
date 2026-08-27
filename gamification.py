@@ -3,7 +3,8 @@ Gamification system for AI Chef
 Tracks cooking streaks, badges/achievements, and weekly challenges
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+import contextlib
 from typing import ClassVar
 
 from data_dir import get_data_dir
@@ -53,7 +54,7 @@ class CookingStreak:
         is_vegan: bool = False,
     ):
         """Record that a meal was cooked today."""
-        today_date = datetime.now(timezone.utc).date()
+        today_date = datetime.now(UTC).date()
         today = today_date.isoformat()
         last_date = self.data.get("last_cooked_date")
 
@@ -199,10 +200,8 @@ class AchievementTracker:
         achievements = self._default_achievements()
         for aid, a in data.items():
             if aid in achievements:
-                try:
+                with contextlib.suppress(TypeError, KeyError):
                     achievements[aid] = Achievement(**a)
-                except (TypeError, KeyError):
-                    pass
         return achievements
 
     def _default_achievements(self):
@@ -222,7 +221,7 @@ class AchievementTracker:
         ):
             self.achievements[achievement_id].unlocked = True
             self.achievements[achievement_id].unlock_date = datetime.now(
-                timezone.utc
+                UTC
             ).isoformat()
             self.save_achievements()
             return True
@@ -291,7 +290,7 @@ class WeeklyChallenges:
 
     def _get_week_start(self):
         """Get the start date of the current week (Monday)."""
-        today = datetime.now(timezone.utc).date()
+        today = datetime.now(UTC).date()
         week_start = today - timedelta(days=today.weekday())
         return week_start.isoformat()
 
@@ -357,7 +356,7 @@ class GamificationManager:
         self.achievements = AchievementTracker()
         self.challenges = WeeklyChallenges()
 
-    def record_recipe_cooked(
+    def record_recipe_cooked(  # noqa: C901
         self,
         recipe_name: str,
         cuisine: str | None = None,
