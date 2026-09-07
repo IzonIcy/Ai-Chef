@@ -3,11 +3,11 @@ name = "ai-chef"
 version = "1.0.0"
 description = "Terminal recipe finder / AI recipe generator / meal planner / pantry tracker"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 license = {text = "MIT"}
 authors = [{name = "Ryan Bahadori", email = "ryanbahadori74@gmail.com"}]
 dependencies = [
-    "openai>=3.2.0,<4.0",
+    "openai>=1.0,<2.0",
     "python-dotenv>=1.0,<2.0",
     "rich>=13.0,<14.0",
 ]
@@ -26,7 +26,7 @@ python_functions = ["test_*"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py313"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "C90", "UP", "B", "SIM", "T20"]
@@ -37,10 +37,26 @@ quote-style = "single"
 indent-style = "space"
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "numpy.*"
+ignore_errors = true
+
+[tool.setuptools]
+py-modules = [
+    "ai_chef",
+    "ai_generator",
+    "data_dir",
+    "gamification",
+    "meal_planner",
+    "json_store",
+    "recipes",
+]
 
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
