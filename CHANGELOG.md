@@ -7,7 +7,9 @@ versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [Unreleased]
+## [1.2.0] - 2026-09-25
+
+Search, a bigger library, and three correctness fixes.
 
 ### Added
 

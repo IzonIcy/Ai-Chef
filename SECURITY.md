@@ -7,9 +7,9 @@ fixes.
 
 | Version | Supported           |
 | ------- | ------------------- |
-| 1.1.x   | yes                 |
-| 1.0.x   | security fixes only |
-| < 1.0   | no                  |
+| 1.2.x   | yes                 |
+| 1.1.x   | security fixes only |
+| < 1.1   | no                  |
 
 ## Reporting a vulnerability
 
