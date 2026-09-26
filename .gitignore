@@ -50,10 +50,8 @@ achievements.json
 weekly_challenges.json
 pantry_inventory.json
 
-# OpenCode config
+# OpenCode config (personal tooling, not part of the project)
 opencode.json
 
-# Agent instruction files
-AGENTS.md
-CLAUDE.md
-.github/copilot-instructions.md
+# Agent instruction files ARE tracked. AGENTS.md is the canonical project doc
+# and CLAUDE.md is a symlink to it. Do not re-add them here.
