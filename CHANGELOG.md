@@ -26,10 +26,20 @@ versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Weekly meal plans no longer fall back to the entire recipe database when
+  nothing matches the filters, which meant asking for a keto plan returned a
+  week of beef. The cook time cap is now relaxed first since it is only a
+  preference, and an unsatisfiable dietary restriction raises with a clear
+  message instead of being silently ignored.
+- Weekly plans actually vary cuisine. The docstring claimed they did, but the
+  code indexed straight into the candidate list in database order.
 - Portion scaling now scales built-in recipes. Built-in ingredients are stored
   as bare names so ingredient matching and grocery categorisation keep working,
   which left nowhere for a quantity, so scaling doubled the servings and
   changed nothing else. Recipes now carry an `amounts` sidecar.
+- The ingredient finder and the browse menu shared no filter code, so a rule
+  change had to be made twice and the finder's copy could not filter by
+  cuisine. Both now go through `filter_recipes`.
 - Cuisine filtering matches on substrings, so `asi` finds `Asian`.
 
 ## [1.1.0] - 2026-09-25
