@@ -16,13 +16,15 @@ broccoli" takes forever. So I made something that does it instantly.
 
 - **Recipe finder** — tell it what ingredients you have, it tells you what you
   can make and what else you'd need
+- **Recipe search** — free-text search by name, cuisine, or ingredient across
+  19 built-in recipes plus your own
 - **AI recipe generator** — describe a craving, GPT writes you a custom recipe
   (optional, needs an API key)
 - **Meal planner** — generates a weekly plan and a grocery list from your
   dietary preferences, exported as CSV or Markdown
 - **Filters** — by cook time, difficulty, dietary restrictions, cuisine
 - **Gamification** — cooking streaks, achievements, and weekly challenges
-- **Portion scaling** — scale any recipe up or down
+- **Portion scaling** — scale any recipe up or down, quantities included
 
 ## Running it
 
@@ -100,9 +102,9 @@ were testing different code. One source of truth, or neither.
 
 ## Maybe later
 
-- Nutritional info per serving
-- More built-in recipes, and search across cuisine
 - Importing recipes from a URL
+- Nutrition info per serving
+- A proper `CONTRIBUTING` wishlist of beginner-friendly issues
 
 ## License
 

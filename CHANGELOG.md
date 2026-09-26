@@ -7,6 +7,31 @@ versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [Unreleased]
+
+### Added
+
+- Free-text recipe search across the merged built-in and user recipe set.
+  Case-insensitive substring matching over name, cuisine, ingredients, and
+  instructions, with every term required to match so multi-word queries stay
+  precise. Name hits outrank ingredient hits, which outrank instruction hits.
+  An empty query browses everything and lists the cuisines available.
+- `recipes.all_cuisines()` for discovering what is in the library.
+- The browse menu takes a search query before its existing filters, and
+  `filter_recipes` accepts a `pool` so search results can be narrowed further.
+- Nine new built-in recipes, bringing the library to 19 across 11 cuisines:
+  Thai, Indian, Japanese, Greek, and French dishes, plus more vegan options.
+- Library integrity tests covering required keys, unique names, filterable
+  difficulty values, known dietary tags, and bare lowercase ingredient names.
+
+### Fixed
+
+- Portion scaling now scales built-in recipes. Built-in ingredients are stored
+  as bare names so ingredient matching and grocery categorisation keep working,
+  which left nowhere for a quantity, so scaling doubled the servings and
+  changed nothing else. Recipes now carry an `amounts` sidecar.
+- Cuisine filtering matches on substrings, so `asi` finds `Asian`.
+
 ## [1.1.0] - 2026-09-25
 
 Maintenance release. No new features; the app behaves the same except that the

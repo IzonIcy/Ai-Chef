@@ -18,15 +18,15 @@ toolchain if you use [mise](https://mise.jdx.dev).
 
 Seven modules, flat and deliberately shallow. No framework, no ORM.
 
-| Module | Responsibility |
-| --- | --- |
-| `ai_chef.py` | Entry point. Rich TUI, menu dispatch, user prompts. |
-| `ai_generator.py` | OpenAI calls + response parsing (JSON, with a text fallback). |
-| `recipes.py` | Recipe data model, ingredient matching, portion scaling. |
-| `meal_planner.py` | Weekly plans, grocery list generation, CSV/Markdown export. |
-| `gamification.py` | Streaks, achievements, weekly challenges. |
-| `json_store.py` | Atomic JSON read/write. All persistence funnels through here. |
-| `data_dir.py` | Resolves the per-user data directory (XDG on Linux, App Support on macOS). |
+| Module            | Responsibility                                                             |
+| ----------------- | -------------------------------------------------------------------------- |
+| `ai_chef.py`      | Entry point. Rich TUI, menu dispatch, user prompts.                        |
+| `ai_generator.py` | OpenAI calls + response parsing (JSON, with a text fallback).              |
+| `recipes.py`      | Recipe data model, ingredient matching, text search, portion scaling.      |
+| `meal_planner.py` | Weekly plans, grocery list generation, CSV/Markdown export.                |
+| `gamification.py` | Streaks, achievements, weekly challenges.                                  |
+| `json_store.py`   | Atomic JSON read/write. All persistence funnels through here.              |
+| `data_dir.py`     | Resolves the per-user data directory (XDG on Linux, App Support on macOS). |
 
 ### Conventions
 
@@ -83,6 +83,19 @@ If you add a module, add it to both `[tool.mypy] files` and
 
 ## Adding a recipe
 
-Built-in recipes live in `recipes.py`. A user-added recipe goes to
-`saved_recipes.json` in the data dir via `recipes.py`, and the two are merged at
-read time — so a built-in addition and a user recipe never collide on write.
+Built-in recipes live in `RECIPE_DATABASE` in `recipes.py`. A user-added recipe
+goes to `user_recipes.json` in the data dir via `recipes.py`, and the two are
+merged at read time — so a built-in addition and a user recipe never collide on
+write.
+
+Two things to get right, both enforced by `tests/test_recipe_library.py` and
+`tests/test_scaling_amounts.py`:
+
+- **`ingredients` are bare lowercase names with no quantities** — "chicken", not
+  "1.5 lbs chicken". `find_recipes_by_ingredients` and the grocery categoriser
+  match on these strings exactly, so a quantity in here silently breaks
+  matching.
+- **Quantities live in the `amounts` sidecar**, a dict mapping each ingredient
+  name to a quantity string ("1.5 lbs"). `scale_recipe` scales that and renders
+  "3 lbs chicken" for display. Every ingredient needs an entry, and each
+  quantity must start with a number so the scaler can read it.
