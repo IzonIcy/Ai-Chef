@@ -137,3 +137,28 @@ def test_find_by_ingredients_ignores_invalid_cook_time(monkeypatch, console_capt
     out = console_capture.getvalue()
     assert 'Invalid cook time' in out
     assert 'Chicken Stir-Fry with Broccoli' in out  # filter skipped, results still shown
+
+
+# meal_planning_menu
+
+
+def test_meal_planner_reports_an_unsatisfiable_diet(monkeypatch, console_capture, tmp_path):
+    monkeypatch.setenv('AI_CHEF_DATA_DIR', str(tmp_path / 'data'))
+    _answers(monkeypatch, '1', 'keto', '', '')
+
+    ai_chef.meal_planning_menu()
+
+    out = console_capture.getvalue()
+    assert 'keto' in out
+    assert 'Meal plan saved' not in out  # nothing was saved, and it says so
+
+
+def test_meal_planner_builds_a_plan_for_a_satisfiable_diet(monkeypatch, console_capture, tmp_path):
+    monkeypatch.setenv('AI_CHEF_DATA_DIR', str(tmp_path / 'data'))
+    _answers(monkeypatch, '1', 'vegan', '', '')
+
+    ai_chef.meal_planning_menu()
+
+    out = console_capture.getvalue()
+    assert 'Meal plan saved' in out
+    assert 'Monday' in out
