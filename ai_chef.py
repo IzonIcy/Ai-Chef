@@ -298,6 +298,22 @@ def find_recipes_menu():  # noqa: C901  # noqa: C901
             console.print('[red]Invalid selection.[/red]')
 
 
+def _require_api_key(feature):
+    """Warn and return ``False`` when the AI features can't be reached.
+
+    Menus should bail out before prompting: the generators degrade to a
+    "key not set" message, but rendering that inside a Panel reads like a real
+    answer rather than an error.
+    """
+    if os.getenv('OPENAI_API_KEY'):
+        return True
+    console.print(f'[red]Error: OPENAI_API_KEY not found. {feature} need an API key.[/red]')
+    console.print(
+        '[yellow]Set it in a .env file or the environment to enable AI features.[/yellow]'
+    )
+    return False
+
+
 def ai_recipe_menu():
     """Menu for generating recipes with AI."""
     console.print('\n[bold yellow]🤖 Generate Custom Recipe with AI[/bold yellow]\n')
@@ -375,6 +391,9 @@ def ai_cooking_tips_menu():
     """Menu for AI cooking tips."""
     console.print('\n[bold yellow]💡 AI Cooking Tips[/bold yellow]\n')
 
+    if not _require_api_key('cooking tips'):
+        return
+
     recipe_name = Prompt.ask('Enter recipe name')
     if not recipe_name.strip():
         console.print('[yellow]Please enter a recipe name.[/yellow]')
@@ -391,6 +410,9 @@ def ai_cooking_tips_menu():
 def ingredient_substitutions_menu():
     """Menu for ingredient substitutions."""
     console.print('\n[bold yellow]🔁 Ingredient Substitutions[/bold yellow]\n')
+
+    if not _require_api_key('substitutions'):
+        return
 
     ingredient = Prompt.ask('Enter ingredient to substitute')
     if not ingredient.strip():
