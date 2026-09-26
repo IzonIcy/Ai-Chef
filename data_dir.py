@@ -15,11 +15,11 @@ from pathlib import Path
 
 def get_data_dir() -> Path:
     """Return the user data directory, creating it if needed."""
-    override = os.getenv("AI_CHEF_DATA_DIR")
+    override = os.getenv('AI_CHEF_DATA_DIR')
     if override:
         base = Path(override)
     else:
-        xdg = os.getenv("XDG_DATA_HOME")
-        base = Path(xdg) / "ai-chef" if xdg else Path.home() / ".local" / "share" / "ai-chef"
+        xdg = os.getenv('XDG_DATA_HOME')
+        base = Path(xdg) / 'ai-chef' if xdg else Path.home() / '.local' / 'share' / 'ai-chef'
     base.mkdir(parents=True, exist_ok=True)
     return base

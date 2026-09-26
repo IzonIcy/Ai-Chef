@@ -39,7 +39,7 @@ class Clock:
         return _real_datetime.datetime.fromisoformat(date_string)
 
     def today_str(self):
-        return self.current.strftime("%Y-%m-%d")
+        return self.current.strftime('%Y-%m-%d')
 
     def week_start_str(self):
         today = self.current.date()
@@ -54,14 +54,14 @@ def hermetic_data_dir(tmp_path, monkeypatch):
     Classes defaulting to get_data_dir() must never touch the real
     ~/.local/share/ai-chef from tests — state there would leak between runs.
     """
-    monkeypatch.setenv("AI_CHEF_DATA_DIR", str(tmp_path / "ai-chef-data"))
-    return tmp_path / "ai-chef-data"
+    monkeypatch.setenv('AI_CHEF_DATA_DIR', str(tmp_path / 'ai-chef-data'))
+    return tmp_path / 'ai-chef-data'
 
 
 @pytest.fixture
 def clock(monkeypatch):
     """Freeze datetime for meal_planner and gamification at a fixed Monday."""
     frozen = Clock()
-    monkeypatch.setattr(meal_planner, "datetime", frozen)
-    monkeypatch.setattr(gamification, "datetime", frozen)
+    monkeypatch.setattr(meal_planner, 'datetime', frozen)
+    monkeypatch.setattr(gamification, 'datetime', frozen)
     return frozen

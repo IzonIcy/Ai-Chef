@@ -15,7 +15,7 @@ from pathlib import Path
 def load_json(path: str | Path, default):
     """Load JSON from `path`, returning `default` when missing or corrupt."""
     try:
-        with open(path, encoding="utf-8") as f:
+        with open(path, encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
         return default
@@ -32,8 +32,8 @@ def save_json_atomic(path: str | Path, data) -> None:
     """
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    tmp = target.with_name(target.name + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
+    tmp = target.with_name(target.name + '.tmp')
+    with open(tmp, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2)
         f.flush()
         os.fsync(f.fileno())
