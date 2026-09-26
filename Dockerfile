@@ -2,12 +2,14 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Dependencies come from pyproject.toml, the single source of truth.
+COPY pyproject.toml README.md ./
+COPY ai_chef.py ai_generator.py data_dir.py gamification.py json_store.py meal_planner.py recipes.py ./
 
-COPY . .
+RUN pip install --no-cache-dir . \
+    && useradd --create-home --uid 1000 chef \
+    && chown -R chef:chef /app
 
-RUN useradd --create-home --uid 1000 chef
 USER chef
 
-CMD ["python", "-m", "ai_chef"]
+CMD ["python", "ai_chef.py"]

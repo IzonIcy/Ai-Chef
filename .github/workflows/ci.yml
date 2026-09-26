@@ -21,22 +21,35 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install dependencies
+      - name: Install project
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          # Pinned so CI lint results match local tooling instead of
-          # drifting with each new release.
-          pip install "ruff==0.16.4" "mypy==2.3.1" "pytest==9.1.1"
+          # pyproject.toml is the single source of truth for dependencies.
+          # Do not reintroduce a requirements.txt alongside it.
+          pip install -e ".[dev]"
 
       - name: Lint
         run: ruff check .
 
+      - name: Format check
+        run: ruff format --check .
+
       - name: Type check
-        run: mypy .
+        run: mypy
 
       - name: Test
         run: python -m pytest
 
-      - name: Build check
-        run: python -m compileall .
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Build image
+        run: docker build -t ai-chef:ci .
+
+      - name: Smoke test entrypoint
+        # The TUI needs a TTY, so just prove the module imports and resolves.
+        run: docker run --rm ai-chef:ci python -c "import ai_chef; print('ok')"
