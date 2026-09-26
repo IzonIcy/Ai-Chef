@@ -87,3 +87,53 @@ def test_filters_apply_on_top_of_search(monkeypatch, console_capture):
     out = console_capture.getvalue()
     assert 'Chicken Stir-Fry with Broccoli' in out
     assert 'One-Pan Chicken Broccoli Rice' not in out
+
+
+# find_recipes_menu
+
+
+def test_find_by_ingredients_lists_matches(monkeypatch, console_capture):
+    _answers(monkeypatch, 'chicken,rice,broccoli', '', '', '', '')
+
+    ai_chef.find_recipes_menu()
+
+    out = console_capture.getvalue()
+    assert 'Chicken Stir-Fry with Broccoli' in out
+    assert 'Match %' in out
+
+
+def test_find_by_ingredients_applies_cook_time_filter(monkeypatch, console_capture):
+    _answers(monkeypatch, 'chicken,rice', '20', '', '', '')
+
+    ai_chef.find_recipes_menu()
+
+    out = console_capture.getvalue()
+    assert 'Chicken Stir-Fry with Broccoli' in out  # 20 min
+    assert 'One-Pan Chicken Broccoli Rice' not in out  # 40 min
+
+
+def test_find_by_ingredients_reports_no_match(monkeypatch, console_capture):
+    _answers(monkeypatch, 'cactus,unicorn')
+
+    ai_chef.find_recipes_menu()
+
+    assert 'No recipes found' in console_capture.getvalue()
+
+
+def test_find_by_ingredients_supports_cuisine_filter(monkeypatch, console_capture):
+    # Shared filter rules mean this menu gained cuisine filtering too.
+    _answers(monkeypatch, 'shrimp', '', '', '', 'Japanese')
+
+    ai_chef.find_recipes_menu()
+
+    assert 'No recipes found' in console_capture.getvalue()
+
+
+def test_find_by_ingredients_ignores_invalid_cook_time(monkeypatch, console_capture):
+    _answers(monkeypatch, 'chicken', 'not-a-number', '', '', '')
+
+    ai_chef.find_recipes_menu()
+
+    out = console_capture.getvalue()
+    assert 'Invalid cook time' in out
+    assert 'Chicken Stir-Fry with Broccoli' in out  # filter skipped, results still shown

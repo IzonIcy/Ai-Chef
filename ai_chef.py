@@ -204,43 +204,24 @@ def display_recipe(recipe):
     console.print(f'\n[bold cyan]{"=" * 60}[/bold cyan]\n')
 
 
-def find_recipes_menu():  # noqa: C901  # noqa: C901
+def find_recipes_menu():
     """Menu for finding recipes by ingredients."""
     console.print('\n[bold yellow]🔍 Find Recipes by Ingredients[/bold yellow]\n')
 
     ingredients_input = Prompt.ask('Enter ingredients you have (comma-separated)')
     ingredients = [ing.strip() for ing in ingredients_input.split(',')]
 
-    # Optional filters
-    console.print('\n[dim]Optional filters (press Enter to skip):[/dim]')
-    max_time = Prompt.ask('Maximum cook time (minutes)', default='')
-    max_time_int = parse_optional_int(max_time)
-    if max_time and max_time_int is None:
-        console.print('[yellow]Invalid cook time entered. Skipping cook time filter.[/yellow]')
-
-    difficulty = Prompt.ask('Difficulty level (easy/medium/hard)', default='')
-    dietary = Prompt.ask('Dietary preference (vegetarian/vegan/gluten-free)', default='')
-
-    # Find matching recipes
     matches = find_recipes_by_ingredients(ingredients)
 
-    # Apply More additional filters
-    if max_time or difficulty or dietary:
-        filtered_matches = []
-        for match in matches:
-            recipe = match['recipe']
-            passes = True
-
-            if max_time_int is not None and recipe['cook_time'] > max_time_int:
-                passes = False
-            if difficulty and recipe['difficulty'].lower() != difficulty.lower():
-                passes = False
-            if dietary and dietary.lower() not in [d.lower() for d in recipe['dietary']]:
-                passes = False
-
-            if passes:
-                filtered_matches.append(match)
-        matches = filtered_matches
+    # Narrow the matches with the shared filter rules rather than a second
+    # copy of them, keeping the match metadata attached to each recipe.
+    allowed = {
+        id(recipe)
+        for recipe in filter_recipes(
+            pool=[m['recipe'] for m in matches], **prompt_filters(include_cuisine=True)
+        )
+    }
+    matches = [m for m in matches if id(m['recipe']) in allowed]
 
     if not matches:
         console.print('\n[red]No recipes found matching your criteria.[/red]')
