@@ -68,9 +68,12 @@ def _format_amount(value):
 def scale_recipe(recipe, factor):
     """Return a copy of the recipe scaled by ``factor``.
 
-    Servings are multiplied. Ingredient strings that start with an amount
-    ("2 cups rice", "1.5 tbsp oil", "1/2 cup milk") have that amount scaled;
-    ingredients without a leading amount pass through unchanged.
+    Servings are multiplied. Quantities are scaled too, taken from the recipe's
+    ``amounts`` sidecar when present (the built-in recipes use one so that
+    ``ingredients`` can stay bare names for matching) and otherwise parsed from
+    a leading amount in the ingredient string itself ("2 cups rice").
+
+    The returned ``ingredients`` are display strings such as "3 lbs chicken".
     """
     factor = float(factor)
     if factor <= 0:
@@ -83,7 +86,25 @@ def scale_recipe(recipe, factor):
     except (TypeError, ValueError):
         scaled['servings'] = servings
 
-    def scale_ingredient(ingredient):
+    amounts = recipe.get('amounts') or {}
+
+    def scale_quantity(quantity):
+        """Scale the leading number of a quantity string, keeping the unit."""
+        match = _LEADING_AMOUNT_RE.match(quantity.strip())
+        if not match:
+            return quantity
+        amount = float(match.group(1))
+        denominator = match.group(2)
+        if denominator:
+            amount /= float(denominator)
+        rest = quantity.strip()[match.end() :].strip()
+        return f'{_format_amount(amount * factor)} {rest}'.strip()
+
+    def render(ingredient):
+        quantity = amounts.get(ingredient)
+        if quantity is not None:
+            return f'{scale_quantity(quantity)} {ingredient}'.strip()
+        # No sidecar: fall back to a leading amount in the string itself.
         match = _LEADING_AMOUNT_RE.match(ingredient.strip())
         if not match:
             return ingredient
@@ -94,7 +115,7 @@ def scale_recipe(recipe, factor):
         rest = ingredient.strip()[match.end() :].strip()
         return f'{_format_amount(amount * factor)} {rest}'.strip()
 
-    scaled['ingredients'] = [scale_ingredient(i) for i in recipe.get('ingredients', [])]
+    scaled['ingredients'] = [render(i) for i in recipe.get('ingredients', [])]
     return scaled
 
 
@@ -102,6 +123,14 @@ RECIPE_DATABASE = [
     {
         'name': 'Chicken Stir-Fry with Broccoli',
         'ingredients': ['chicken', 'broccoli', 'soy sauce', 'garlic', 'ginger', 'oil'],
+        'amounts': {
+            'chicken': '1.5 lbs',
+            'broccoli': '2 cups',
+            'soy sauce': '3 tbsp',
+            'garlic': '3 cloves',
+            'ginger': '1 tbsp',
+            'oil': '2 tbsp',
+        },
         'cook_time': 20,
         'difficulty': 'easy',
         'cuisine': 'Asian',
@@ -127,6 +156,14 @@ RECIPE_DATABASE = [
             'chicken broth',
             'thyme',
         ],
+        'amounts': {
+            'chicken': '4 breasts',
+            'rice': '1.5 cups',
+            'garlic': '4 cloves',
+            'butter': '2 tbsp',
+            'chicken broth': '3 cups',
+            'thyme': '2 sprigs',
+        },
         'cook_time': 35,
         'difficulty': 'easy',
         'cuisine': 'American',
@@ -154,6 +191,15 @@ RECIPE_DATABASE = [
             'chicken broth',
             'cheese',
         ],
+        'amounts': {
+            'chicken': '1.5 lbs',
+            'rice': '2 cups',
+            'broccoli': '3 cups',
+            'onion': '1',
+            'garlic': '4 cloves',
+            'chicken broth': '4 cups',
+            'cheese': '1 cup',
+        },
         'cook_time': 40,
         'difficulty': 'easy',
         'cuisine': 'American',
@@ -180,6 +226,15 @@ RECIPE_DATABASE = [
             'olive oil',
             'parmesan',
         ],
+        'amounts': {
+            'pasta': '12 oz',
+            'broccoli': '2 cups',
+            'bell pepper': '2',
+            'zucchini': '2',
+            'garlic': '3 cloves',
+            'olive oil': '3 tbsp',
+            'parmesan': '0.5 cup',
+        },
         'cook_time': 25,
         'difficulty': 'easy',
         'cuisine': 'Italian',
@@ -206,6 +261,15 @@ RECIPE_DATABASE = [
             'cheese',
             'sour cream',
         ],
+        'amounts': {
+            'ground beef': '1 lb',
+            'taco seasoning': '3 tbsp',
+            'tortillas': '8',
+            'lettuce': '2 cups',
+            'tomato': '2',
+            'cheese': '1 cup',
+            'sour cream': '0.5 cup',
+        },
         'cook_time': 20,
         'difficulty': 'easy',
         'cuisine': 'Mexican',
@@ -231,6 +295,14 @@ RECIPE_DATABASE = [
             'lemon',
             'garlic',
         ],
+        'amounts': {
+            'salmon': '2 fillets',
+            'broccoli': '3 cups',
+            'bell pepper': '2',
+            'olive oil': '2 tbsp',
+            'lemon': '1',
+            'garlic': '3 cloves',
+        },
         'cook_time': 25,
         'difficulty': 'medium',
         'cuisine': 'Mediterranean',
@@ -256,6 +328,14 @@ RECIPE_DATABASE = [
             'cream',
             'basil',
         ],
+        'amounts': {
+            'tomatoes': '2 lbs',
+            'onion': '1',
+            'garlic': '4 cloves',
+            'vegetable broth': '4 cups',
+            'cream': '0.5 cup',
+            'basil': '1 handful',
+        },
         'cook_time': 30,
         'difficulty': 'easy',
         'cuisine': 'American',
@@ -281,6 +361,14 @@ RECIPE_DATABASE = [
             'avocado',
             'tahini',
         ],
+        'amounts': {
+            'rice': '1 cup',
+            'chickpeas': '1 can',
+            'sweet potato': '2',
+            'kale': '4 cups',
+            'avocado': '1',
+            'tahini': '0.25 cup',
+        },
         'cook_time': 35,
         'difficulty': 'medium',
         'cuisine': 'International',
@@ -305,6 +393,13 @@ RECIPE_DATABASE = [
             'caesar dressing',
             'lemon',
         ],
+        'amounts': {
+            'romaine lettuce': '2 heads',
+            'parmesan': '1 cup',
+            'croutons': '2 cups',
+            'caesar dressing': '0.5 cup',
+            'lemon': '1',
+        },
         'cook_time': 10,
         'difficulty': 'easy',
         'cuisine': 'Italian',
@@ -331,6 +426,15 @@ RECIPE_DATABASE = [
             'lemon',
             'parsley',
         ],
+        'amounts': {
+            'shrimp': '1 lb',
+            'pasta': '12 oz',
+            'garlic': '5 cloves',
+            'butter': '4 tbsp',
+            'white wine': '0.5 cup',
+            'lemon': '1',
+            'parsley': '0.25 cup',
+        },
         'cook_time': 20,
         'difficulty': 'medium',
         'cuisine': 'Italian',
