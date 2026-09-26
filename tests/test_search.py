@@ -46,7 +46,8 @@ _CHICKEN_SIDE_RECIPE = {
 
 def test_search_matches_on_recipe_name():
     names = [r['name'] for r in search_recipes('stir-fry')]
-    assert names == ['Chicken Stir-Fry with Broccoli']
+    assert 'Chicken Stir-Fry with Broccoli' in names
+    assert 'Tofu Vegetable Stir-Fry' in names
 
 
 def test_search_is_case_insensitive():

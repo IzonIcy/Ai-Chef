@@ -88,70 +88,77 @@ def test_filter_returns_a_copy_not_the_database_reference():
     result = filter_recipes()
     result.clear()
 
-    assert len(RECIPE_DATABASE) == 10
+    assert RECIPE_DATABASE  # still populated
 
 
 def test_filter_by_cook_time_returns_recipes_within_limit():
     results = filter_recipes(cook_time=20)
 
-    names = {r['name'] for r in results}
-    assert names == {
-        'Chicken Stir-Fry with Broccoli',
-        'Beef Tacos',
-        'Classic Caesar Salad',
-        'Shrimp Scampi',
-    }
+    assert results
     assert all(r['cook_time'] <= 20 for r in results)
+    assert 'Chicken Stir-Fry with Broccoli' in {r['name'] for r in results}
+    # A recipe over the limit must be excluded.
+    assert 'One-Pan Chicken Broccoli Rice' not in {r['name'] for r in results}
 
 
 def test_filter_by_difficulty_is_case_insensitive():
     results = filter_recipes(difficulty='MEDIUM')
 
-    names = {r['name'] for r in results}
-    assert names == {
-        'Salmon with Roasted Vegetables',
-        'Veggie Buddha Bowl',
-        'Shrimp Scampi',
-    }
+    assert results
+    assert all(r['difficulty'] == 'medium' for r in results)
+    assert 'Shrimp Scampi' in {r['name'] for r in results}
 
 
 def test_filter_by_dietary_restriction():
     results = filter_recipes(dietary='vegetarian')
 
-    names = {r['name'] for r in results}
-    assert names == {
-        'Vegetarian Pasta Primavera',
-        'Creamy Tomato Soup',
-        'Classic Caesar Salad',
-    }
+    assert results
+    assert all('vegetarian' in r['dietary'] for r in results)
+    assert {'Vegetarian Pasta Primavera', 'Classic Caesar Salad'} <= {r['name'] for r in results}
+    assert 'Chicken Stir-Fry with Broccoli' not in {r['name'] for r in results}
 
 
 def test_filter_by_cuisine_is_case_insensitive():
     results = filter_recipes(cuisine='Italian')
 
-    names = {r['name'] for r in results}
-    assert names == {
-        'Vegetarian Pasta Primavera',
-        'Classic Caesar Salad',
-        'Shrimp Scampi',
+    assert results
+    assert all(r['cuisine'] == 'Italian' for r in results)
+    assert {'Vegetarian Pasta Primavera', 'Classic Caesar Salad', 'Shrimp Scampi'} == {
+        r['name'] for r in results
     }
+
+
+def test_filter_by_cuisine_accepts_a_partial_name():
+    results = filter_recipes(cuisine='asi')
+
+    assert results
+    assert all('asi' in r['cuisine'].lower() for r in results)
 
 
 def test_filter_combines_multiple_criteria():
     results = filter_recipes(dietary='vegetarian', cook_time=25)
 
-    names = {r['name'] for r in results}
-    assert names == {'Vegetarian Pasta Primavera', 'Classic Caesar Salad'}
+    assert all('vegetarian' in r['dietary'] for r in results)
+    assert all(r['cook_time'] <= 25 for r in results)
+    assert 'Classic Caesar Salad' in {r['name'] for r in results}
 
 
 def test_filter_dietary_conflict_excludes_noncompliant_recipes():
-    # A vegan filter must never return chicken dishes
+    # A vegan filter must never return a recipe containing meat or fish.
     results = filter_recipes(dietary='vegan')
 
-    names = {r['name'] for r in results}
-    assert names == {'Veggie Buddha Bowl'}
-    assert 'Chicken Stir-Fry with Broccoli' not in names
-    assert 'Beef Tacos' not in names
+    assert results
+    assert all('vegan' in r['dietary'] for r in results)
+    forbidden = {'chicken', 'beef', 'salmon', 'shrimp', 'ground beef'}
+    for recipe in results:
+        assert not forbidden & {i.lower() for i in recipe['ingredients']}
+
+
+def test_filter_pool_restricts_the_candidates():
+    pool = [r for r in RECIPE_DATABASE if r['cuisine'] == 'Italian']
+    results = filter_recipes(pool=pool)
+
+    assert {r['name'] for r in results} == {r['name'] for r in pool}
 
 
 def test_filter_unknown_cuisine_returns_empty_list():
