@@ -384,7 +384,76 @@ def find_recipes_by_ingredients(available_ingredients):
     return matches
 
 
-def filter_recipes(cook_time=None, difficulty=None, dietary=None, cuisine=None):
+_SEARCH_FIELDS = ('name', 'cuisine', 'ingredients', 'instructions')
+
+# Relevance weights. A term in the title matters far more than the same term
+# buried in the method, so "chicken" should surface "Garlic Chicken and Rice"
+# above a recipe that merely uses chicken.
+_SEARCH_WEIGHTS = {
+    'name': 100,
+    'cuisine': 40,
+    'ingredients': 30,
+    'instructions': 5,
+}
+
+
+def _searchable_text(recipe, field):
+    """Return the lowercased text of ``field`` for a recipe."""
+    value = recipe.get(field)
+    if isinstance(value, list):
+        return ' '.join(str(item) for item in value).lower()
+    return str(value or '').lower()
+
+
+def _score_recipe(recipe, terms):
+    """Sum the weights of every (term, field) hit. ``None`` if a term is missing."""
+    total = 0
+    for term in terms:
+        best = 0
+        for field in _SEARCH_FIELDS:
+            if term in _searchable_text(recipe, field):
+                best = max(best, _SEARCH_WEIGHTS[field])
+        if best == 0:
+            return None
+        total += best
+    return total
+
+
+def search_recipes(query):
+    """Free-text search across built-in and user recipes.
+
+    Every whitespace-separated term must appear somewhere in the recipe, which
+    keeps results precise: "chicken rice" finds the one-pan recipe, not every
+    chicken dish. An empty query browses everything, sorted by name.
+
+    Args:
+        query (str): Free text, e.g. "thai", "noodles", "chicken rice"
+
+    Returns:
+        list: Matching recipes, most relevant first.
+    """
+    terms = query.lower().split()
+    candidates = all_recipes()
+
+    if not terms:
+        return sorted(candidates, key=lambda r: r['name'].lower())
+
+    scored = []
+    for recipe in candidates:
+        score = _score_recipe(recipe, terms)
+        if score is not None:
+            scored.append((score, recipe))
+
+    scored.sort(key=lambda pair: (-pair[0], pair[1]['name'].lower()))
+    return [recipe for _, recipe in scored]
+
+
+def all_cuisines():
+    """Every cuisine present in the merged recipe set, sorted and deduplicated."""
+    return sorted({r.get('cuisine', '') for r in all_recipes() if r.get('cuisine')})
+
+
+def filter_recipes(cook_time=None, difficulty=None, dietary=None, cuisine=None, pool=None):
     """
     Filter recipes based on various criteria.
 
@@ -392,12 +461,14 @@ def filter_recipes(cook_time=None, difficulty=None, dietary=None, cuisine=None):
         cook_time (int): Maximum cooking time in minutes
         difficulty (str): Difficulty level (easy, medium, hard)
         dietary (str): Dietary restriction (vegetarian, vegan, gluten-free, etc.)
-        cuisine (str): Cuisine type
+        cuisine (str): Cuisine type. Partial names match, so "asi" finds "Asian".
+        pool (list): Restrict filtering to these recipes instead of all of them.
+            Used to narrow the results of a search.
 
     Returns:
         list: Filtered recipes
     """
-    filtered = all_recipes()
+    filtered = list(pool) if pool is not None else all_recipes()
 
     if cook_time:
         filtered = [r for r in filtered if r['cook_time'] <= cook_time]
@@ -409,7 +480,9 @@ def filter_recipes(cook_time=None, difficulty=None, dietary=None, cuisine=None):
         filtered = [r for r in filtered if dietary.lower() in [d.lower() for d in r['dietary']]]
 
     if cuisine:
-        filtered = [r for r in filtered if r['cuisine'].lower() == cuisine.lower()]
+        # Substring, not equality: "asi" should find "Asian".
+        needle = cuisine.lower().strip()
+        filtered = [r for r in filtered if needle in r['cuisine'].lower()]
 
     return filtered
 

@@ -25,12 +25,14 @@ from meal_planner import MealPlanner, PantryManager, SavedRecipes
 from recipes import (
     RECIPE_DATABASE,
     add_user_recipe,
+    all_cuisines,
     filter_recipes,
     find_recipes_by_ingredients,
     get_recipe_by_name,
     load_user_recipes,
     remove_user_recipe,
     scale_recipe,
+    search_recipes,
 )
 
 load_dotenv()
@@ -700,27 +702,61 @@ def saved_recipes_menu():
             console.print('[red]Invalid selection.[/red]')
 
 
-def browse_all_recipes():
-    """Browse all available recipes."""
-    console.print('\n[bold yellow]📖 Browse All Recipes[/bold yellow]\n')
+def prompt_filters(include_cuisine=False):
+    """Ask the shared optional filter questions.
 
-    # Apply filters
-    console.print('[dim]Optional filters (press Enter to skip):[/dim]')
+    Returns kwargs ready to splat into :func:`recipes.filter_recipes`, with
+    unanswered questions left as ``None`` so they apply no filter.
+    """
+    console.print('\n[dim]Optional filters (press Enter to skip):[/dim]')
     max_time = Prompt.ask('Maximum cook time (minutes)', default='')
     max_time_int = parse_optional_int(max_time)
     if max_time and max_time_int is None:
         console.print('[yellow]Invalid cook time entered. Skipping cook time filter.[/yellow]')
 
     difficulty = Prompt.ask('Difficulty level (easy/medium/hard)', default='')
-    dietary = Prompt.ask('Dietary preference', default='')
-    cuisine = Prompt.ask('Cuisine type', default='')
+    dietary = Prompt.ask('Dietary preference (vegetarian/vegan/gluten-free)', default='')
 
-    filtered = filter_recipes(
-        cook_time=max_time_int,
-        difficulty=difficulty if difficulty else None,
-        dietary=dietary if dietary else None,
-        cuisine=cuisine if cuisine else None,
+    kwargs = {
+        'cook_time': max_time_int,
+        'difficulty': difficulty or None,
+        'dietary': dietary or None,
+    }
+    if include_cuisine:
+        cuisine = Prompt.ask('Cuisine type', default='')
+        kwargs['cuisine'] = cuisine or None
+    return kwargs
+
+
+def _browse_candidates(query):
+    """Resolve the recipe pool for the browse menu from a search query.
+
+    An empty query browses everything and advertises the cuisines on offer, so
+    the user can see what is worth searching for.
+    """
+    if not query.strip():
+        cuisines = all_cuisines()
+        if cuisines:
+            console.print(f'[dim]Cuisines available: {", ".join(cuisines)}[/dim]')
+        return filter_recipes()
+    return search_recipes(query)
+
+
+def browse_all_recipes():
+    """Search and browse all available recipes."""
+    console.print('\n[bold yellow]📖 Browse & Search Recipes[/bold yellow]\n')
+
+    # Free-text search narrows first, then the structured filters narrow further.
+    query = Prompt.ask(
+        'Search by name, cuisine, or ingredient (Enter to browse everything)', default=''
     )
+
+    candidates = _browse_candidates(query)
+    if not candidates:
+        console.print(f'\n[red]Nothing matches "{query}".[/red]')
+        return
+
+    filtered = filter_recipes(pool=candidates, **prompt_filters(include_cuisine=True))
 
     if not filtered:
         console.print('\n[red]No recipes match your filters.[/red]')
