@@ -7,6 +7,11 @@ versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-25
+
+Maintenance release. No new features; the app behaves the same except that the
+AI menus now explain themselves when no API key is set.
+
 ### Fixed
 
 - The AI cooking tips and ingredient substitutions menus prompted for input

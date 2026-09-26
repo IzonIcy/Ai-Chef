@@ -1,6 +1,6 @@
 [project]
 name = "ai-chef"
-version = "1.0.0"
+version = "1.1.0"
 description = "Terminal recipe finder / AI recipe generator / meal planner / pantry tracker"
 readme = "README.md"
 requires-python = ">=3.12"

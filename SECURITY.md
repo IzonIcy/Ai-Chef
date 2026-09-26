@@ -5,10 +5,11 @@
 Ai-Chef is a small personal tool. Only the latest released version receives
 fixes.
 
-| Version | Supported |
-| --- | --- |
-| 1.0.x | yes |
-| < 1.0 | no |
+| Version | Supported           |
+| ------- | ------------------- |
+| 1.1.x   | yes                 |
+| 1.0.x   | security fixes only |
+| < 1.0   | no                  |
 
 ## Reporting a vulnerability
 
