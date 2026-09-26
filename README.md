@@ -100,12 +100,6 @@ The other thing I got wrong early: the project had two dependency manifests that
 quietly drifted onto different major versions of the SDK, so CI and my laptop
 were testing different code. One source of truth, or neither.
 
-## Maybe later
-
-- Importing recipes from a URL
-- Nutrition info per serving
-- A proper `CONTRIBUTING` wishlist of beginner-friendly issues
-
 ## License
 
 MIT — see [LICENSE](LICENSE).
