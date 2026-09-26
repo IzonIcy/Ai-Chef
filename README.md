@@ -1,42 +1,106 @@
 # AI Chef
 
-[![CI](https://github.com/Codingmaster123fe/Ai-Chef/actions/workflows/ci.yml/badge.svg)](https://github.com/Codingmaster123fe/Ai-Chef/actions/workflows/ci.yml)
+[![CI](https://github.com/IzonIcy/Ai-Chef/actions/workflows/ci.yml/badge.svg)](https://github.com/IzonIcy/Ai-Chef/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](pyproject.toml)
 
-A terminal app that helps you figure out what to cook based on ingredients you already have.
+A terminal app that helps you figure out what to cook based on ingredients you
+already have.
 
-I built this because I kept buying groceries without a plan, letting food go bad, and then ordering takeout. Turns out the problem wasn't lack of recipes — it was that looking through cookbooks for "what can I make with chicken, rice, and broccoli" takes forever. So I made something that does it instantly.
+I built this because I kept buying groceries without a plan, letting food go bad,
+and then ordering takeout. Turns out the problem wasn't lack of recipes — it was
+that looking through cookbooks for "what can I make with chicken, rice, and
+broccoli" takes forever. So I made something that does it instantly.
 
 ## What it does
 
-- **Recipe finder** — tell it what ingredients you have, it tells you what you can make and what else you'd need
-- **AI recipe generator** — describe a craving, GPT writes you a custom recipe (optional, needs an API key)
-- **Meal planner** — generates a weekly plan + grocery list based on your dietary preferences
+- **Recipe finder** — tell it what ingredients you have, it tells you what you
+  can make and what else you'd need
+- **AI recipe generator** — describe a craving, GPT writes you a custom recipe
+  (optional, needs an API key)
+- **Meal planner** — generates a weekly plan and a grocery list from your
+  dietary preferences, exported as CSV or Markdown
 - **Filters** — by cook time, difficulty, dietary restrictions, cuisine
+- **Gamification** — cooking streaks, achievements, and weekly challenges
+- **Portion scaling** — scale any recipe up or down
 
 ## Running it
 
+Requires Python 3.12 or newer.
+
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/IzonIcy/Ai-Chef.git
+cd Ai-Chef
+python -m venv .venv && source .venv/bin/activate
+pip install -e .
 python ai_chef.py
 ```
 
-If you want AI generation, create a `.env` file:
+### Optional: AI features
+
+Every feature works without an API key. To enable the AI recipe generator,
+copy the example env file and fill in your key:
+
+```bash
+cp .env.example .env
+```
 
 ```
 OPENAI_API_KEY=sk-your-key-here
 ```
 
-The recipe finder works without it. The AI generation is the fun part though.
+The recipe finder, meal planner, and gamification are unaffected either way —
+that's deliberate, so the app is useful without paying for anything.
+
+## Docker
+
+```bash
+docker build -t ai-chef .
+docker run -it ai-chef
+```
+
+Pass the key in with `-e OPENAI_API_KEY=sk-...` if you want the AI path. Your
+recipes and plans are written to the data dir inside the container, so mount a
+volume to `/home/chef/.local/share/ai-chef` to keep them.
+
+## Development
+
+`pyproject.toml` is the single source of truth for dependencies. Run the same
+gates CI runs with:
+
+```bash
+pip install -e ".[dev]"
+mise run check
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the conventions a change should
+follow, and [AGENTS.md](AGENTS.md) for how the modules fit together.
 
 ## Tech
 
-Python 3.13, OpenAI API, Rich for the terminal UI. Built-in recipes live in code, your own recipes/plans/pantry live in the XDG data dir (`~/.local/share/ai-chef`) — SQLite felt like overkill for something I can edit by hand.
+Python 3.12+, the OpenAI SDK, and Rich for the terminal UI. Built-in recipes
+live in code; your own recipes, plans, and pantry live in the platform data
+directory (`~/.local/share/ai-chef` on Linux, `~/Library/Application
+Support/ai-chef` on macOS). SQLite felt like overkill for a JSON file I can edit
+by hand — `json_store` writes atomically, so a crash mid-write can't corrupt it.
 
 ## What I learned
 
-This was my first project working with LLM APIs. The most interesting part was prompt engineering for recipe generation — getting the model to output structured, parsable recipes instead of prose paragraphs took some iteration. The fallback path (no API key) forced me to make the core recipe matching solid on its own, which was a good constraint.
+This was my first project working with LLM APIs. The most interesting part was
+prompt engineering for recipe generation — getting the model to output
+structured, parsable recipes instead of prose paragraphs took some iteration,
+and the defensive parsing path in `ai_generator.py` is the scar tissue from that.
+
+The other thing I got wrong early: the project had two dependency manifests that
+quietly drifted onto different major versions of the SDK, so CI and my laptop
+were testing different code. One source of truth, or neither.
 
 ## Maybe later
 
-- Nutritional info
-- More built-in recipes
+- Nutritional info per serving
+- More built-in recipes, and search across cuisine
+- Importing recipes from a URL
+
+## License
+
+MIT — see [LICENSE](LICENSE).
