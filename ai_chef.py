@@ -567,9 +567,14 @@ def meal_planning_menu():  # noqa: C901
         dietary_pref = dietary if dietary else None
 
         console.print('\n[cyan]Creating your weekly meal plan...[/cyan]\n')
-        week_plan = planner.create_weekly_plan(
-            dietary_preference=dietary_pref, max_cook_time=max_time_int
-        )
+        try:
+            week_plan = planner.create_weekly_plan(
+                dietary_preference=dietary_pref, max_cook_time=max_time_int
+            )
+        except ValueError as e:
+            # An unsatisfiable diet is reported, never quietly worked around.
+            console.print(f'\n[red]{e}[/red]')
+            return
 
         # Display plan
         plan_table = _render_plan_table(week_plan)

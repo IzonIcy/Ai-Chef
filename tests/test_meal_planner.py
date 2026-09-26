@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from meal_planner import MealPlanner, PantryManager, SavedRecipes
+from meal_planner import MealPlanner, PantryManager, SavedRecipes, _balance_by_cuisine
 from recipes import RECIPE_DATABASE
 
 RECIPE_NAMES = {r['name'] for r in RECIPE_DATABASE}
@@ -80,6 +80,73 @@ def test_create_weekly_plan_respects_cook_time_cap_with_repetition(tmp_path, clo
 
     assert len(plan) == 7
     assert all(day_info['cook_time'] <= 20 for day_info in plan.values())
+
+
+def test_create_weekly_plan_refuses_to_violate_an_unsatisfiable_diet(tmp_path, clock):
+    # No recipe is keto. Falling back to the whole database would hand a keto
+    # user a week of beef, so this must fail loudly instead.
+    planner = MealPlanner(filename=str(tmp_path / 'plan.json'))
+
+    with pytest.raises(ValueError, match='keto'):
+        planner.create_weekly_plan(dietary_preference='keto')
+
+
+def test_create_weekly_plan_relaxes_cook_time_before_relaxing_diet(tmp_path, clock):
+    # No vegan recipe takes under a minute, but relaxing the time cap still
+    # leaves vegan recipes, so the plan must be built rather than refused.
+    planner = MealPlanner(filename=str(tmp_path / 'plan.json'))
+
+    plan = planner.create_weekly_plan(dietary_preference='vegan', max_cook_time=1)
+
+    assert len(plan) == 7
+    assert all('chicken' not in day_info['recipe'].lower() for day_info in plan.values())
+
+
+def test_create_weekly_plan_varies_cuisine_across_the_week(tmp_path, clock):
+    planner = MealPlanner(filename=str(tmp_path / 'plan.json'))
+
+    plan = planner.create_weekly_plan()
+
+    by_name = {r['name']: r['cuisine'] for r in RECIPE_DATABASE}
+    cuisines = [by_name[day_info['recipe']] for day_info in plan.values()]
+    assert len(set(cuisines)) >= 4, f'only used cuisines {set(cuisines)}'
+
+
+# _balance_by_cuisine
+
+
+def test_balance_gives_every_day_a_different_cuisine_when_it_can():
+    chosen = _balance_by_cuisine(RECIPE_DATABASE, 7)
+    assert len({r['cuisine'] for r in chosen}) == 7
+
+
+def test_balance_repeats_when_there_are_fewer_recipes_than_days():
+    # More days than recipes: the pool has to be reused.
+    pool = RECIPE_DATABASE[:5]
+    chosen = _balance_by_cuisine(pool, 12)
+    assert len(chosen) == 12
+    assert {r['name'] for r in chosen} == {r['name'] for r in pool}
+
+
+def test_balance_does_not_repeat_when_the_pool_is_large_enough():
+    chosen = _balance_by_cuisine(RECIPE_DATABASE, 12)
+    assert len(chosen) == 12
+    assert len({r['name'] for r in chosen}) == 12
+
+
+def test_balance_repeats_a_single_recipe_pool():
+    single = [RECIPE_DATABASE[0]]
+    chosen = _balance_by_cuisine(single, 7)
+    assert len(chosen) == 7
+    assert {r['name'] for r in chosen} == {RECIPE_DATABASE[0]['name']}
+
+
+def test_balance_returns_empty_for_an_empty_pool():
+    assert _balance_by_cuisine([], 7) == []
+
+
+def test_balance_is_deterministic():
+    assert _balance_by_cuisine(RECIPE_DATABASE, 7) == _balance_by_cuisine(RECIPE_DATABASE, 7)
 
 
 def test_export_grocery_list_csv_format(tmp_path):

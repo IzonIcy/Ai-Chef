@@ -23,6 +23,38 @@ def _to_title_case(text):
     return ' '.join(word.capitalize() for word in text.split())
 
 
+def _balance_by_cuisine(recipes, count) -> list[dict]:
+    """Return ``count`` recipes, cycling through cuisines before repeating.
+
+    Groups the candidates by cuisine and takes one recipe per cuisine in turn,
+    so a week of seven meals does not come out as seven Italian dishes just
+    because the database lists them first. Once every cuisine has been used the
+    remaining slots are filled from the shortest remaining group, so the input
+    can be smaller than ``count`` and the caller still gets a full week.
+    """
+    by_cuisine: dict[str, list] = {}
+    for recipe in recipes:
+        by_cuisine.setdefault(recipe.get('cuisine') or 'Other', []).append(recipe)
+
+    # Longest groups first so the plentiful cuisines land early in the week.
+    groups = sorted(by_cuisine.values(), key=len, reverse=True)
+
+    ordered: list[dict] = []
+    round_index = 0
+    while len(ordered) < count and any(len(g) > round_index for g in groups):
+        for group in groups:
+            if len(group) > round_index:
+                ordered.append(group[round_index])
+                if len(ordered) == count:
+                    break
+        round_index += 1
+
+    # Should not be reachable, but never return a short week.
+    if len(ordered) < count and recipes:
+        ordered.extend(recipes[len(ordered) % len(recipes)] for _ in range(count - len(ordered)))
+    return ordered
+
+
 class MealPlanner:
     """Handle meal planning and grocery list generation."""
 
@@ -45,24 +77,36 @@ class MealPlanner:
         """
         Create a balanced weekly meal plan.
 
+        Constraints are relaxed in order of least surprise: the cook time cap
+        gives way first, the dietary restriction never does. Asking for keto
+        raises rather than handing back a week of beef.
+
         Args:
-            dietary_preference (str): Dietary restriction to consider
-            max_cook_time (int): Maximum cooking time per meal
+            dietary_preference (str): Dietary restriction to honour
+            max_cook_time (int): Preferred maximum cooking time per meal
 
         Returns:
             dict: Weekly meal plan with recipes for each day
+
+        Raises:
+            ValueError: If no recipe satisfies the dietary restriction.
         """
-        # Filter recipes based on preferences
         available_recipes = filter_recipes(cook_time=max_cook_time, dietary=dietary_preference)
 
-        # Fewer than 7 matches is fine: repeat them across the week rather
-        # than silently dropping the user's dietary/time constraints. Only
-        # an empty match set forces the full database as a last resort.
-        if not available_recipes:
-            available_recipes = RECIPE_DATABASE  # Fall back to all recipes
+        if not available_recipes and max_cook_time is not None:
+            # The time cap is a preference; the diet is not. Drop the cap and
+            # keep the restriction.
+            available_recipes = filter_recipes(dietary=dietary_preference)
 
-        # Create a balanced plan - try to vary cuisines
-        week_plan = {}
+        if not available_recipes and dietary_preference:
+            raise ValueError(
+                f'No recipes match the "{dietary_preference}" dietary restriction. '
+                'Add a matching recipe or pick a different preference.'
+            )
+
+        if not available_recipes:
+            available_recipes = RECIPE_DATABASE
+
         days = [
             'Monday',
             'Tuesday',
@@ -72,24 +116,14 @@ class MealPlanner:
             'Saturday',
             'Sunday',
         ]
-        used_recipes: set[str] = set()
+        week_plan: dict[str, dict[str, str | int]] = {}
 
-        for day in days:
-            # Try to pick recipes with different cuisines
-            available_for_day = [r for r in available_recipes if r['name'] not in used_recipes]
-
-            if not available_for_day:
-                available_for_day = available_recipes  # Reset if we run out
-                used_recipes.clear()
-
-            # Pick a recipe
-            recipe = available_for_day[len(used_recipes) % len(available_for_day)]
-            week_plan[day] = {
+        for recipe in _balance_by_cuisine(available_recipes, len(days)):
+            week_plan[days[len(week_plan)]] = {
                 'recipe': recipe['name'],
                 'cook_time': recipe['cook_time'],
                 'servings': recipe['servings'],
             }
-            used_recipes.add(recipe['name'])
 
         # Save the plan
         plan_date = datetime.now(UTC).strftime('%Y-%m-%d')
