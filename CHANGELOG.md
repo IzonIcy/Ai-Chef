@@ -9,6 +9,11 @@ versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- The AI cooking tips and ingredient substitutions menus prompted for input
+  before checking for an API key, then rendered the generator's "key not set"
+  message inside a Panel where it read like a real answer. Both now report the
+  missing key up front and exit, matching the existing behaviour of the custom
+  recipe menu.
 - `mypy` was failing on a syntax error inside a third-party stub (numpy uses
   PEP 695 `type` statements) before it checked any project code, so the type
   check in CI was silently checking nothing. Mypy is now scoped to the project's
@@ -38,6 +43,7 @@ versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
 
 - `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`.
 - `mise run check` and `mise run fix` tasks wrapping the CI gates.
+- `tests/test_ai_chef_menus.py` covering the TUI-level API key guards.
 - `AGENTS.md` is tracked in git and rewritten to describe the architecture and
   conventions of the project. The duplicate `.github/copilot-instructions.md`
   was removed so there is a single source of truth for agent instructions.

@@ -38,8 +38,14 @@ python ai_chef.py
 
 ### Optional: AI features
 
-Every feature works without an API key. To enable the AI recipe generator,
-copy the example env file and fill in your key:
+Every feature works without an API key. The recipe finder, meal planner,
+grocery export, scaling, and gamification are entirely local. The three
+AI-backed features — custom recipe generation, cooking tips, and ingredient
+substitutions — tell you they need a key and exit cleanly, rather than failing
+somewhere in the middle. That's deliberate, so the app is useful without paying
+for anything.
+
+To enable the AI features, copy the example env file and fill in your key:
 
 ```bash
 cp .env.example .env
@@ -48,9 +54,6 @@ cp .env.example .env
 ```
 OPENAI_API_KEY=sk-your-key-here
 ```
-
-The recipe finder, meal planner, and gamification are unaffected either way —
-that's deliberate, so the app is useful without paying for anything.
 
 ## Docker
 
