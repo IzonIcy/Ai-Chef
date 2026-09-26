@@ -1,2 +1,10 @@
 [tools]
 python = "3.13.12"
+
+[tasks.check]
+description = "Run every gate CI runs"
+run = ["ruff check .", "ruff format --check .", "mypy", "python -m pytest"]
+
+[tasks.fix]
+description = "Auto-fix lint and formatting"
+run = ["ruff check --fix .", "ruff format ."]
