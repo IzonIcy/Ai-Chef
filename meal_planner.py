@@ -15,12 +15,12 @@ from recipes import RECIPE_DATABASE, filter_recipes, get_recipe_by_name
 def _normalize_ingredient_name(ingredient):
     """Normalize ingredient text for grouping and matching."""
     cleaned = ingredient.strip().lower()
-    cleaned = re.sub(r"\s+", " ", cleaned)
+    cleaned = re.sub(r'\s+', ' ', cleaned)
     return cleaned
 
 
 def _to_title_case(text):
-    return " ".join(word.capitalize() for word in text.split())
+    return ' '.join(word.capitalize() for word in text.split())
 
 
 class MealPlanner:
@@ -28,7 +28,7 @@ class MealPlanner:
 
     def __init__(self, filename=None):
         if filename is None:
-            filename = str(get_data_dir() / "meal_plans.json")
+            filename = str(get_data_dir() / 'meal_plans.json')
         self.filename = filename
         self.meal_plan = self.load_meal_plan()
 
@@ -53,9 +53,7 @@ class MealPlanner:
             dict: Weekly meal plan with recipes for each day
         """
         # Filter recipes based on preferences
-        available_recipes = filter_recipes(
-            cook_time=max_cook_time, dietary=dietary_preference
-        )
+        available_recipes = filter_recipes(cook_time=max_cook_time, dietary=dietary_preference)
 
         # Fewer than 7 matches is fine: repeat them across the week rather
         # than silently dropping the user's dietary/time constraints. Only
@@ -66,21 +64,19 @@ class MealPlanner:
         # Create a balanced plan - try to vary cuisines
         week_plan = {}
         days = [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
-            "Sunday",
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday',
+            'Saturday',
+            'Sunday',
         ]
-        used_recipes = set()
+        used_recipes: set[str] = set()
 
         for day in days:
             # Try to pick recipes with different cuisines
-            available_for_day = [
-                r for r in available_recipes if r["name"] not in used_recipes
-            ]
+            available_for_day = [r for r in available_recipes if r['name'] not in used_recipes]
 
             if not available_for_day:
                 available_for_day = available_recipes  # Reset if we run out
@@ -89,14 +85,14 @@ class MealPlanner:
             # Pick a recipe
             recipe = available_for_day[len(used_recipes) % len(available_for_day)]
             week_plan[day] = {
-                "recipe": recipe["name"],
-                "cook_time": recipe["cook_time"],
-                "servings": recipe["servings"],
+                'recipe': recipe['name'],
+                'cook_time': recipe['cook_time'],
+                'servings': recipe['servings'],
             }
-            used_recipes.add(recipe["name"])
+            used_recipes.add(recipe['name'])
 
         # Save the plan
-        plan_date = datetime.now(UTC).strftime("%Y-%m-%d")
+        plan_date = datetime.now(UTC).strftime('%Y-%m-%d')
         self.meal_plan[plan_date] = week_plan
         self.save_meal_plan()
 
@@ -104,7 +100,7 @@ class MealPlanner:
 
     def add_meal_to_plan(self, day, recipe_name):
         """Add a specific meal to a specific day."""
-        plan_date = datetime.now(UTC).strftime("%Y-%m-%d")
+        plan_date = datetime.now(UTC).strftime('%Y-%m-%d')
         if plan_date not in self.meal_plan:
             self.meal_plan[plan_date] = {}
 
@@ -113,9 +109,9 @@ class MealPlanner:
 
         if recipe:
             self.meal_plan[plan_date][day] = {
-                "recipe": recipe["name"],
-                "cook_time": recipe["cook_time"],
-                "servings": recipe["servings"],
+                'recipe': recipe['name'],
+                'cook_time': recipe['cook_time'],
+                'servings': recipe['servings'],
             }
             self.save_meal_plan()
             return True
@@ -123,7 +119,7 @@ class MealPlanner:
 
     def get_current_plan(self):
         """Get the current week's meal plan."""
-        plan_date = datetime.now(UTC).strftime("%Y-%m-%d")
+        plan_date = datetime.now(UTC).strftime('%Y-%m-%d')
         return self.meal_plan.get(plan_date, {})
 
     def generate_grocery_list(self, week_plan=None):  # noqa: C901
@@ -145,70 +141,70 @@ class MealPlanner:
         # Collect and count all ingredients across planned meals
         ingredient_counts = {}
         for meal_info in week_plan.values():
-            recipe = get_recipe_by_name(meal_info["recipe"])
+            recipe = get_recipe_by_name(meal_info['recipe'])
             if recipe:
-                for ingredient in recipe["ingredients"]:
+                for ingredient in recipe['ingredients']:
                     key = _normalize_ingredient_name(ingredient)
                     if key not in ingredient_counts:
                         ingredient_counts[key] = {
-                            "item": _to_title_case(key),
-                            "quantity": 0,
-                            "unit": "recipe-use",
+                            'item': _to_title_case(key),
+                            'quantity': 0,
+                            'unit': 'recipe-use',
                         }
-                    ingredient_counts[key]["quantity"] += 1
+                    ingredient_counts[key]['quantity'] += 1
 
         # Categorize ingredients (simple categorization)
         categories = {
-            "Proteins": [
-                "chicken",
-                "beef",
-                "salmon",
-                "shrimp",
-                "ground beef",
-                "chickpeas",
+            'Proteins': [
+                'chicken',
+                'beef',
+                'salmon',
+                'shrimp',
+                'ground beef',
+                'chickpeas',
             ],
-            "Vegetables": [
-                "broccoli",
-                "bell pepper",
-                "zucchini",
-                "tomato",
-                "lettuce",
-                "onion",
-                "kale",
-                "sweet potato",
-                "tomatoes",
-                "romaine lettuce",
-                "avocado",
+            'Vegetables': [
+                'broccoli',
+                'bell pepper',
+                'zucchini',
+                'tomato',
+                'lettuce',
+                'onion',
+                'kale',
+                'sweet potato',
+                'tomatoes',
+                'romaine lettuce',
+                'avocado',
             ],
-            "Grains & Pasta": ["rice", "pasta", "tortillas"],
-            "Dairy": ["cheese", "butter", "cream", "sour cream", "parmesan"],
-            "Pantry": [
-                "soy sauce",
-                "garlic",
-                "ginger",
-                "oil",
-                "olive oil",
-                "taco seasoning",
-                "chicken broth",
-                "vegetable broth",
-                "tahini",
-                "caesar dressing",
+            'Grains & Pasta': ['rice', 'pasta', 'tortillas'],
+            'Dairy': ['cheese', 'butter', 'cream', 'sour cream', 'parmesan'],
+            'Pantry': [
+                'soy sauce',
+                'garlic',
+                'ginger',
+                'oil',
+                'olive oil',
+                'taco seasoning',
+                'chicken broth',
+                'vegetable broth',
+                'tahini',
+                'caesar dressing',
             ],
-            "Herbs & Seasonings": ["thyme", "basil", "parsley"],
-            "Other": [],
+            'Herbs & Seasonings': ['thyme', 'basil', 'parsley'],
+            'Other': [],
         }
 
-        grocery_list = {cat: [] for cat in categories}
+        grocery_list: dict[str, list[dict[str, str | int]]] = {cat: [] for cat in categories}
 
         for normalized_ingredient, ingredient_data in ingredient_counts.items():
             categorized = False
             for category, items in categories.items():
-                if category != "Other" and normalized_ingredient in items:
+                if category != 'Other' and normalized_ingredient in items:
                     grocery_list[category].append(ingredient_data)
                     categorized = True
                     break
             if not categorized:
-                grocery_list["Other"].append(ingredient_data)
+                grocery_list['Other'].append(ingredient_data)
 
         # Remove empty categories
         grocery_list = {k: v for k, v in grocery_list.items() if v}
@@ -223,32 +219,32 @@ class MealPlanner:
         Returns (csv_path, md_path).
         """
         base = Path(str(path_base))
-        csv_path = Path(f"{base}.csv")
-        md_path = Path(f"{base}.md")
+        csv_path = Path(f'{base}.csv')
+        md_path = Path(f'{base}.md')
 
-        with open(csv_path, "w", newline="") as f:
+        with open(csv_path, 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(["category", "item", "quantity", "unit"])
+            writer.writerow(['category', 'item', 'quantity', 'unit'])
             for category, items in grocery_list.items():
-                for item in sorted(items, key=lambda x: x.get("item", "")):
+                for item in sorted(items, key=lambda x: x.get('item', '')):
                     writer.writerow(
                         [
                             category,
-                            item.get("item", ""),
-                            item.get("quantity", 0),
-                            item.get("unit", "recipe-use"),
+                            item.get('item', ''),
+                            item.get('quantity', 0),
+                            item.get('unit', 'recipe-use'),
                         ]
                     )
 
-        lines = ["# Grocery List"]
+        lines = ['# Grocery List']
         for category, items in grocery_list.items():
-            lines.append("")
-            lines.append(f"## {category}")
-            for item in sorted(items, key=lambda x: x.get("item", "")):
-                quantity = item.get("quantity", 1)
-                unit = item.get("unit", "")
-                lines.append(f"- [ ] {item.get('item', '')} ({quantity} {unit})")
-        md_path.write_text("\n".join(lines) + "\n")
+            lines.append('')
+            lines.append(f'## {category}')
+            for item in sorted(items, key=lambda x: x.get('item', '')):
+                quantity = item.get('quantity', 1)
+                unit = item.get('unit', '')
+                lines.append(f'- [ ] {item.get("item", "")} ({quantity} {unit})')
+        md_path.write_text('\n'.join(lines) + '\n')
 
         return csv_path, md_path
 
@@ -258,7 +254,7 @@ class PantryManager:
 
     def __init__(self, filename=None):
         if filename is None:
-            filename = str(get_data_dir() / "pantry_inventory.json")
+            filename = str(get_data_dir() / 'pantry_inventory.json')
         self.filename = filename
         self.items = self.load_items()
 
@@ -271,31 +267,31 @@ class PantryManager:
         """Save pantry items to file."""
         save_json_atomic(self.filename, self.items)
 
-    def add_item(self, name, quantity=1, unit="item", expires_on=None):
+    def add_item(self, name, quantity=1, unit='item', expires_on=None):
         """Add or update a pantry item."""
         # Validate expires_on format if provided
         if expires_on:
             try:
-                datetime.strptime(expires_on, "%Y-%m-%d")
+                datetime.strptime(expires_on, '%Y-%m-%d')
             except ValueError as err:
-                raise ValueError("expires_on must be in YYYY-MM-DD format") from err
+                raise ValueError('expires_on must be in YYYY-MM-DD format') from err
         normalized_name = _normalize_ingredient_name(name)
         for item in self.items:
-            if _normalize_ingredient_name(item.get("name", "")) == normalized_name:
-                item["quantity"] = item.get("quantity", 0) + quantity
-                item["unit"] = unit or item.get("unit", "item")
+            if _normalize_ingredient_name(item.get('name', '')) == normalized_name:
+                item['quantity'] = item.get('quantity', 0) + quantity
+                item['unit'] = unit or item.get('unit', 'item')
                 if expires_on:
-                    item["expires_on"] = expires_on
+                    item['expires_on'] = expires_on
                 self.save_items()
                 return True
 
         self.items.append(
             {
-                "name": _to_title_case(normalized_name),
-                "quantity": quantity,
-                "unit": unit or "item",
-                "expires_on": expires_on,
-                "updated_at": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S"),
+                'name': _to_title_case(normalized_name),
+                'quantity': quantity,
+                'unit': unit or 'item',
+                'expires_on': expires_on,
+                'updated_at': datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S'),
             }
         )
         self.save_items()
@@ -308,7 +304,7 @@ class PantryManager:
         self.items = [
             item
             for item in self.items
-            if _normalize_ingredient_name(item.get("name", "")) != normalized_name
+            if _normalize_ingredient_name(item.get('name', '')) != normalized_name
         ]
         changed = len(self.items) < before
         if changed:
@@ -321,32 +317,28 @@ class PantryManager:
 
     def get_pantry_ingredients(self):
         """Return normalized pantry ingredient names for matching."""
-        return [_normalize_ingredient_name(item.get("name", "")) for item in self.items]
+        return [_normalize_ingredient_name(item.get('name', '')) for item in self.items]
 
     def get_expiring_items(self, within_days=3):
         """Return pantry items that expire within N days."""
         expiring = []
         today = datetime.now(UTC).date()
         for item in self.items:
-            expires_on = item.get("expires_on")
+            expires_on = item.get('expires_on')
             if not expires_on:
                 continue
             try:
-                expires_date = (
-                    datetime.strptime(expires_on, "%Y-%m-%d")
-                    .replace(tzinfo=UTC)
-                    .date()
-                )
+                expires_date = datetime.strptime(expires_on, '%Y-%m-%d').replace(tzinfo=UTC).date()
             except ValueError:
                 continue
 
             days_left = (expires_date - today).days
             if days_left <= within_days:
                 item_with_days = dict(item)
-                item_with_days["days_left"] = days_left
+                item_with_days['days_left'] = days_left
                 expiring.append(item_with_days)
 
-        expiring.sort(key=lambda entry: entry.get("days_left", 9999))
+        expiring.sort(key=lambda entry: entry.get('days_left', 9999))
         return expiring
 
 
@@ -355,7 +347,7 @@ class SavedRecipes:
 
     def __init__(self, filename=None):
         if filename is None:
-            filename = str(get_data_dir() / "saved_recipes.json")
+            filename = str(get_data_dir() / 'saved_recipes.json')
         self.filename = filename
         self.saved = self.load_saved()
 
@@ -372,11 +364,11 @@ class SavedRecipes:
         """Add a recipe to saved favorites."""
         # Check if already saved
         for saved_recipe in self.saved:
-            if saved_recipe.get("name") == recipe.get("name"):
+            if saved_recipe.get('name') == recipe.get('name'):
                 return False  # Already saved
 
         # Add timestamp
-        recipe["saved_at"] = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
+        recipe['saved_at'] = datetime.now(UTC).strftime('%Y-%m-%d %H:%M:%S')
         self.saved.append(recipe)
         self.save_to_file()
         return True
@@ -384,7 +376,7 @@ class SavedRecipes:
     def remove_recipe(self, recipe_name):
         """Remove a recipe from saved favorites."""
         initial_length = len(self.saved)
-        self.saved = [r for r in self.saved if r.get("name") != recipe_name]
+        self.saved = [r for r in self.saved if r.get('name') != recipe_name]
 
         if len(self.saved) < initial_length:
             self.save_to_file()
@@ -398,4 +390,4 @@ class SavedRecipes:
     def search_saved(self, query):
         """Search saved recipes by name."""
         query_lower = query.lower()
-        return [r for r in self.saved if query_lower in r.get("name", "").lower()]
+        return [r for r in self.saved if query_lower in r.get('name', '').lower()]
