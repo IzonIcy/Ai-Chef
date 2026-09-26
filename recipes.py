@@ -65,6 +65,41 @@ def _format_amount(value):
     return f'{rounded:g}'
 
 
+# Units we know how to singularise. An explicit map rather than a "drop the
+# trailing s" rule, which would turn "pint" into "pin" and "couscous" into
+# "couscou". Anything not listed is passed through untouched.
+_PLURAL_UNITS = {
+    'bunches': 'bunch',
+    'cans': 'can',
+    'cloves': 'clove',
+    'cups': 'cup',
+    'eggs': 'egg',
+    'fillets': 'fillet',
+    'handfuls': 'handful',
+    'heads': 'head',
+    'lbs': 'lb',
+    'slices': 'slice',
+    'sprigs': 'sprig',
+    'tortillas': 'tortilla',
+}
+
+
+def _render_quantity(amount, unit_text):
+    """Render an amount with its unit, singularised when the count is one.
+
+    "4 cups" at half scale is "2 cups", but "2 cups" at quarter scale is
+    "1 cup" rather than "1 cups".
+    """
+    number = _format_amount(amount)
+    unit_text = unit_text.strip()
+    if number == '1' and unit_text:
+        head, _, tail = unit_text.partition(' ')
+        singular = _PLURAL_UNITS.get(head.lower())
+        if singular:
+            unit_text = f'{singular} {tail}'.strip() if tail else singular
+    return f'{number} {unit_text}'.strip() if unit_text else number
+
+
 def scale_recipe(recipe, factor):
     """Return a copy of the recipe scaled by ``factor``.
 
@@ -98,7 +133,7 @@ def scale_recipe(recipe, factor):
         if denominator:
             amount /= float(denominator)
         rest = quantity.strip()[match.end() :].strip()
-        return f'{_format_amount(amount * factor)} {rest}'.strip()
+        return _render_quantity(amount * factor, rest)
 
     def render(ingredient):
         quantity = amounts.get(ingredient)
@@ -113,7 +148,7 @@ def scale_recipe(recipe, factor):
         if denominator:
             amount /= float(denominator)
         rest = ingredient.strip()[match.end() :].strip()
-        return f'{_format_amount(amount * factor)} {rest}'.strip()
+        return _render_quantity(amount * factor, rest)
 
     scaled['ingredients'] = [render(i) for i in recipe.get('ingredients', [])]
     return scaled
@@ -819,13 +854,28 @@ def _searchable_text(recipe, field):
     return str(value or '').lower()
 
 
+# Words keep internal hyphens and apostrophes so "stir-fry" and "chef's" stay
+# whole tokens rather than splitting into fragments.
+_WORD_RE = re.compile(r"[a-z0-9]+(?:[-'][a-z0-9]+)*")
+
+
+def _term_matches(text, term):
+    """True when any word in ``text`` starts with ``term``.
+
+    Prefix matching, not substring: "asi" finds "Asian" but not "roasting",
+    and "chick" still finds "chicken". Substring matching made short queries
+    return whatever happened to contain the letters.
+    """
+    return any(word.startswith(term) for word in _WORD_RE.findall(text))
+
+
 def _score_recipe(recipe, terms):
     """Sum the weights of every (term, field) hit. ``None`` if a term is missing."""
     total = 0
     for term in terms:
         best = 0
         for field in _SEARCH_FIELDS:
-            if term in _searchable_text(recipe, field):
+            if _term_matches(_searchable_text(recipe, field), term):
                 best = max(best, _SEARCH_WEIGHTS[field])
         if best == 0:
             return None

@@ -7,6 +7,15 @@ versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Scaling a recipe down to a single unit rendered "1 cups broccoli". Known
+  plural units are now singularised when the count is exactly one, using an
+  explicit map rather than a "drop the trailing s" rule.
+- Short search terms no longer match inside unrelated words. "asi" used to hit
+  every instruction containing "roasting"; matching is now on word prefixes, so
+  "asi" finds "Asian" and "chick" finds "chicken" without matching "aside".
+
 ## [1.2.0] - 2026-09-25
 
 Search, a bigger library, and three correctness fixes.
