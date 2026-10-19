@@ -15,6 +15,10 @@ versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
 - Short search terms no longer match inside unrelated words. "asi" used to hit
   every instruction containing "roasting"; matching is now on word prefixes, so
   "asi" finds "Asian" and "chick" finds "chicken" without matching "aside".
+- Text from the model or from a prompt is no longer read as Rich markup. A
+  recipe named "Pasta [/bold yellow]" raised MarkupError and took the menu down
+  with it. Terminal escape sequences are stripped from the same text, which the
+  Markdown panels used to forward straight to the terminal.
 
 ## [1.2.0] - 2026-09-25
 

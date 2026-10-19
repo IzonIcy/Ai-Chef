@@ -5,11 +5,13 @@ A command-line based application to help you discover recipes, plan meals, and t
 """
 
 import os
+import re
 
 from dotenv import load_dotenv
 from rich import box
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.markup import escape as markup_escape
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
@@ -39,6 +41,27 @@ load_dotenv()
 
 console = Console()
 gamification = GamificationManager()
+
+# Untrusted text reaches the console from two directions: model output and
+# whatever the user types. Rich treats "[" in a string as markup, so a recipe
+# named "Pasta [/bold]" raises MarkupError and takes the menu down with it, and
+# it passes raw escape sequences through to the terminal. Anything heading for
+# the screen goes through one of these two helpers first.
+_ESCAPE_SEQUENCE = re.compile(
+    r'\x1b(?:\[[0-?]*[ -/]*[@-~]|\][^\x07\x1b]*(?:\x07|\x1b\\)?|[@-Z\\-_])'
+)
+_CONTROL_CHARACTER = re.compile(r'[\x00-\x08\x0b-\x1f\x7f]')
+
+
+def _strip_escape_sequences(value):
+    """Drop ANSI escape sequences and control characters from untrusted text."""
+    text = _ESCAPE_SEQUENCE.sub('', str(value))
+    return _CONTROL_CHARACTER.sub('', text)
+
+
+def _escape_markup(value):
+    """Make untrusted text safe to interpolate into a Rich markup string."""
+    return markup_escape(_strip_escape_sequences(value))
 
 
 def parse_optional_int(value):
@@ -173,33 +196,34 @@ def display_achievements_menu():
 def display_recipe(recipe):
     """Display a recipe in a nice format."""
     console.print(f'\n[bold cyan]{"=" * 60}[/bold cyan]')
-    console.print(f'[bold yellow]{recipe["name"]}[/bold yellow]')
+    console.print(f'[bold yellow]{_escape_markup(recipe["name"])}[/bold yellow]')
     console.print(f'[bold cyan]{"=" * 60}[/bold cyan]\n')
     # Info table
     info_table = Table(show_header=False, box=box.SIMPLE)
     info_table.add_column('Property', style='cyan')
     info_table.add_column('Value', style='white')
 
-    info_table.add_row('⏱️  Cook Time', f'{recipe.get("cook_time", "N/A")} minutes')
-    info_table.add_row('👨‍🍳 Difficulty', recipe.get('difficulty', 'N/A').title())
-    info_table.add_row('🍽️  Servings', str(recipe.get('servings', 'N/A')))
-    info_table.add_row('🌍 Cuisine', recipe.get('cuisine', 'N/A'))
+    cook_time = _escape_markup(recipe.get('cook_time', 'N/A'))
+    info_table.add_row('⏱️  Cook Time', f'{cook_time} minutes')
+    info_table.add_row('👨‍🍳 Difficulty', _escape_markup(recipe.get('difficulty', 'N/A').title()))
+    info_table.add_row('🍽️  Servings', _escape_markup(recipe.get('servings', 'N/A')))
+    info_table.add_row('🌍 Cuisine', _escape_markup(recipe.get('cuisine', 'N/A')))
 
     if recipe.get('dietary'):
         dietary_str = ', '.join(recipe['dietary'])
-        info_table.add_row('🥗 Dietary', dietary_str.title())
+        info_table.add_row('🥗 Dietary', _escape_markup(dietary_str.title()))
 
     console.print(info_table)
 
     # Ingredients
     console.print('\n[bold green]Ingredients:[/bold green]')
     for ingredient in recipe.get('ingredients', []):
-        console.print(f'  • {ingredient}')
+        console.print(f'  • {_escape_markup(ingredient)}')
 
     # Instructions
     console.print('\n[bold green]Instructions:[/bold green]')
     for i, instruction in enumerate(recipe.get('instructions', []), 1):
-        console.print(f'  {i}. {instruction}')
+        console.print(f'  {i}. {_escape_markup(instruction)}')
 
     console.print(f'\n[bold cyan]{"=" * 60}[/bold cyan]\n')
 
@@ -245,10 +269,10 @@ def find_recipes_menu():
 
         results_table.add_row(
             str(idx),
-            recipe['name'],
+            _escape_markup(recipe['name']),
             match_pct,
-            f'{recipe["cook_time"]} min',
-            recipe['difficulty'],
+            _escape_markup(f'{recipe["cook_time"]} min'),
+            _escape_markup(recipe['difficulty']),
             missing,
         )
 
@@ -348,9 +372,9 @@ def ai_recipe_menu():
     )
 
     if 'error' in recipe:
-        console.print(f'[red]Error: {recipe["error"]}[/red]')
+        console.print(f'[red]Error: {_escape_markup(recipe["error"])}[/red]')
         if 'suggestion' in recipe:
-            console.print(f'[yellow]{recipe["suggestion"]}[/yellow]')
+            console.print(f'[yellow]{_escape_markup(recipe["suggestion"])}[/yellow]')
         return
 
     # Display the generated recipe
@@ -386,8 +410,14 @@ def ai_cooking_tips_menu():
     dietary_value = dietary_preferences if dietary_preferences else None
 
     console.print('\n[cyan]Generating tips...[/cyan]\n')
-    tips = get_cooking_tips(recipe_name, dietary_value) or ''
-    console.print(Panel(Markdown(tips), title=f'Tips for {recipe_name}', border_style='cyan'))
+    tips = _strip_escape_sequences(get_cooking_tips(recipe_name, dietary_value) or '')
+    console.print(
+        Panel(
+            Markdown(tips),
+            title=f'Tips for {_escape_markup(recipe_name)}',
+            border_style='cyan',
+        )
+    )
 
 
 def ingredient_substitutions_menu():
@@ -403,11 +433,11 @@ def ingredient_substitutions_menu():
         return
 
     console.print('\n[cyan]Finding substitutions...[/cyan]\n')
-    substitutions = suggest_substitutions(ingredient) or ''
+    substitutions = _strip_escape_sequences(suggest_substitutions(ingredient) or '')
     console.print(
         Panel(
             Markdown(substitutions),
-            title=f'Substitutions for {ingredient}',
+            title=f'Substitutions for {_escape_markup(ingredient)}',
             border_style='green',
         )
     )
@@ -441,10 +471,10 @@ def pantry_menu():  # noqa: C901
 
         for item in items:
             table.add_row(
-                item.get('name', 'Unknown'),
+                _escape_markup(item.get('name', 'Unknown')),
                 str(item.get('quantity', 0)),
-                item.get('unit', 'item'),
-                item.get('expires_on') or '-',
+                _escape_markup(item.get('unit', 'item')),
+                _escape_markup(item.get('expires_on') or '-'),
             )
         console.print(table)
 
@@ -461,12 +491,12 @@ def pantry_menu():  # noqa: C901
         expires_value = expires_on if expires_on else None
 
         pantry.add_item(name=name, quantity=quantity, unit=unit, expires_on=expires_value)
-        console.print(f'[green]✓ Added {name} to pantry.[/green]')
+        console.print(f'[green]✓ Added {_escape_markup(name)} to pantry.[/green]')
 
     elif choice == '3':
         name = Prompt.ask('Ingredient name to remove')
         if pantry.remove_item(name):
-            console.print(f'[green]✓ Removed {name} from pantry.[/green]')
+            console.print(f'[green]✓ Removed {_escape_markup(name)} from pantry.[/green]')
         else:
             console.print('[yellow]Item not found.[/yellow]')
 
@@ -484,7 +514,11 @@ def pantry_menu():  # noqa: C901
         for item in expiring:
             days_left = item.get('days_left', 0)
             days_display = 'Expired' if days_left < 0 else str(days_left)
-            table.add_row(item.get('name', 'Unknown'), days_display, item.get('expires_on', '-'))
+            table.add_row(
+                _escape_markup(item.get('name', 'Unknown')),
+                days_display,
+                _escape_markup(item.get('expires_on', '-')),
+            )
         console.print(table)
 
     elif choice == '5':
@@ -521,7 +555,7 @@ def pantry_menu():  # noqa: C901
         for idx, match in enumerate(matches[:10], 1):
             table.add_row(
                 str(idx),
-                match['recipe']['name'],
+                _escape_markup(match['recipe']['name']),
                 str(match.get('use_soon_count', 0)),
                 f'{match["match_percentage"] * 100:.0f}%',
             )
@@ -537,7 +571,12 @@ def _render_plan_table(plan):
     plan_table.add_column('Servings', justify='center')
 
     for day, meal in plan.items():
-        plan_table.add_row(day, meal['recipe'], f'{meal["cook_time"]} min', str(meal['servings']))
+        plan_table.add_row(
+            _escape_markup(day),
+            _escape_markup(meal['recipe']),
+            _escape_markup(f'{meal["cook_time"]} min'),
+            str(meal['servings']),
+        )
 
     return plan_table
 
@@ -623,7 +662,7 @@ def meal_planning_menu():  # noqa: C901
     elif choice == '4':
         console.print('\nAvailable recipes:')
         for idx, recipe in enumerate(RECIPE_DATABASE[:10], 1):
-            console.print(f'{idx}. {recipe["name"]}')
+            console.print(f'{idx}. {_escape_markup(recipe["name"])}')
 
         recipe_name = Prompt.ask('\nEnter recipe name')
         day = Prompt.ask('Enter day of week')
@@ -655,7 +694,11 @@ def saved_recipes_menu():
     saved_table.add_column('Saved At', style='dim')
 
     for idx, recipe in enumerate(saved, 1):
-        saved_table.add_row(str(idx), recipe.get('name', 'Unknown'), recipe.get('saved_at', ''))
+        saved_table.add_row(
+            str(idx),
+            _escape_markup(recipe.get('name', 'Unknown')),
+            _escape_markup(recipe.get('saved_at', '')),
+        )
 
     console.print(saved_table)
 
@@ -739,7 +782,7 @@ def browse_all_recipes():
 
     candidates = _browse_candidates(query)
     if not candidates:
-        console.print(f'\n[red]Nothing matches "{query}".[/red]')
+        console.print(f'\n[red]Nothing matches "{_escape_markup(query)}".[/red]')
         return
 
     filtered = filter_recipes(pool=candidates, **prompt_filters(include_cuisine=True))
@@ -759,10 +802,10 @@ def browse_all_recipes():
     for idx, recipe in enumerate(filtered, 1):
         recipe_table.add_row(
             str(idx),
-            recipe['name'],
-            recipe['cuisine'],
-            f'{recipe["cook_time"]} min',
-            recipe['difficulty'],
+            _escape_markup(recipe['name']),
+            _escape_markup(recipe['cuisine']),
+            _escape_markup(f'{recipe["cook_time"]} min'),
+            _escape_markup(recipe['difficulty']),
         )
 
     console.print(f'\n[bold green]Found {len(filtered)} recipes:[/bold green]\n')
@@ -810,7 +853,7 @@ def add_user_recipe_menu():
         console.print('[yellow]Recipe needs a name.[/yellow]')
         return
     if get_recipe_by_name(name):
-        console.print(f"[yellow]A recipe named '{name}' already exists.[/yellow]")
+        console.print(f"[yellow]A recipe named '{_escape_markup(name)}' already exists.[/yellow]")
         return
 
     cuisine = Prompt.ask('Cuisine type', default='Custom').strip() or 'Custom'
@@ -857,9 +900,9 @@ def add_user_recipe_menu():
         'instructions': instructions,
     }
     if add_user_recipe(recipe):
-        console.print(f"[green]✓ Saved '{name}' to your recipes.[/green]")
+        console.print(f"[green]✓ Saved '{_escape_markup(name)}' to your recipes.[/green]")
     else:
-        console.print(f"[yellow]A recipe named '{name}' already exists.[/yellow]")
+        console.print(f"[yellow]A recipe named '{_escape_markup(name)}' already exists.[/yellow]")
 
 
 def remove_user_recipe_menu():
@@ -872,7 +915,7 @@ def remove_user_recipe_menu():
         return
 
     for idx, recipe in enumerate(user_recipes, 1):
-        console.print(f'{idx}. {recipe.get("name", "Unknown")}')
+        console.print(f'{idx}. {_escape_markup(recipe.get("name", "Unknown"))}')
 
     choice_input = Prompt.ask('\nEnter number to remove (Enter to cancel)', default='')
     idx = parse_optional_int(choice_input)
@@ -881,7 +924,7 @@ def remove_user_recipe_menu():
 
     removed = user_recipes[idx - 1]
     if remove_user_recipe(removed.get('name', '')):
-        console.print(f"[green]✓ Removed '{removed.get('name')}'.[/green]")
+        console.print(f"[green]✓ Removed '{_escape_markup(removed.get('name'))}'.[/green]")
 
 
 def main_menu():  # noqa: C901  # noqa: C901
