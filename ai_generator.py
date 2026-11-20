@@ -2,9 +2,11 @@
 AI-powered recipe generation using OpenAI API Infrastructure.
 """
 
+import base64
 import json
 import os
 import re
+from pathlib import Path
 from urllib.parse import urlparse
 
 from dotenv import load_dotenv
@@ -307,6 +309,120 @@ def _safe_int(value, default=0):
         if match:
             return int(match.group(0))
     return default
+
+
+SUPPORTED_IMAGE_TYPES = {
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+}
+
+NO_ENDPOINT_MESSAGE = 'No AI endpoint set. Set OPENAI_API_KEY or OPENAI_BASE_URL (for Ollama).'
+
+PHOTO_PROMPT = (
+    'List the food ingredients you can see in this photo of a fridge shelf or a counter. '
+    'Reply with one line of comma-separated ingredient names, lowercase, no quantities, '
+    'no brands, no commentary. Reply with exactly "none" if you see no food.'
+)
+
+_BULLET_PREFIX = re.compile(r'^\s*(?:[-*•]|\d+[.)])\s*')
+_INGREDIENT_LABEL = re.compile(r'^\s*ingredients?\s*:\s*', re.IGNORECASE)
+_EMPTY_ANSWERS = {'none', 'nothing', 'n/a', 'no ingredients', 'none visible'}
+
+
+def extract_ingredients_from_photo(image_path, model=None):
+    """Read the food ingredients visible in an image.
+
+    Returns ``{'ingredients': [...]}`` on success and ``{'error': ...}`` for a
+    file that cannot be used or an endpoint that answers with nothing usable.
+    Nothing raises at the caller, so the CLI can print one line and exit.
+    """
+    path = Path(image_path)
+    mime_type = SUPPORTED_IMAGE_TYPES.get(path.suffix.lower(), 'image/jpeg')
+    image_bytes = path.read_bytes()
+
+    client_instance = _get_client()
+    if not client_instance:
+        return {'error': NO_ENDPOINT_MESSAGE}
+
+    encoded = base64.b64encode(image_bytes).decode('ascii')
+    response = client_instance.chat.completions.create(
+        model=model or _get_model(),
+        messages=[
+            {
+                'role': 'system',
+                'content': 'You identify food ingredients in photos. Reply with the list only.',
+            },
+            {
+                'role': 'user',
+                'content': [
+                    {'type': 'text', 'text': PHOTO_PROMPT},
+                    {
+                        'type': 'image_url',
+                        'image_url': {'url': f'data:{mime_type};base64,{encoded}'},
+                    },
+                ],
+            },
+        ],
+        temperature=0.2,
+        max_tokens=300,
+    )
+
+    reply = response.choices[0].message.content or ''
+    return {'ingredients': parse_ingredient_list(reply)}
+
+
+def parse_ingredient_list(text):
+    """Parse bare ingredient names out of a model's reply.
+
+    Model output is untrusted, so this accepts a JSON list, a bulleted list, or
+    a comma list wrapped in prose, then keeps only short lowercase names that
+    can match a recipe ingredient.
+    """
+    if not text or not text.strip():
+        return []
+
+    items = _try_parse_json_ingredients(text)
+    if items is None:
+        items = []
+        for line in text.strip().splitlines():
+            line = _BULLET_PREFIX.sub('', line.strip())
+            line = _INGREDIENT_LABEL.sub('', line)
+            items.extend(line.split(','))
+
+    ingredients: list[str] = []
+    for item in items:
+        name = str(item).strip().strip('`\'"').strip().lower()
+        if name.startswith(('and ', 'or ')):
+            name = name.split(' ', 1)[1].strip()
+        if not name or name in _EMPTY_ANSWERS or len(name.split()) > 4:
+            continue
+        if name.endswith(('.', ':', '!', '?')):
+            continue
+        if name not in ingredients:
+            ingredients.append(name)
+    return ingredients
+
+
+def _try_parse_json_ingredients(text):
+    """Return a list from JSON model output, or None when there is no JSON."""
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        match = re.search(r'\[[\s\S]*\]', text)
+        if not match:
+            return None
+        try:
+            parsed = json.loads(match.group(0))
+        except json.JSONDecodeError:
+            return None
+
+    if isinstance(parsed, dict):
+        parsed = parsed.get('ingredients')
+        return parsed if isinstance(parsed, list) else []
+    return parsed if isinstance(parsed, list) else None
 
 
 def get_cooking_tips(recipe_name, dietary_preferences=None):

@@ -4,8 +4,10 @@ AI Chef - Smart Cooking Assistant
 A command-line based application to help you discover recipes, plan meals, and to cook smarter
 """
 
+import argparse
 import os
 import re
+import sys
 
 from dotenv import load_dotenv
 from rich import box
@@ -17,6 +19,7 @@ from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
 from ai_generator import (
+    extract_ingredients_from_photo,
     generate_recipe_with_ai,
     get_cooking_tips,
     suggest_substitutions,
@@ -228,6 +231,39 @@ def display_recipe(recipe):
     console.print(f'\n[bold cyan]{"=" * 60}[/bold cyan]\n')
 
 
+def show_matches(matches, limit=10):
+    """Print the match table shared by the ingredient menu and --photo."""
+    if not matches:
+        console.print('\n[red]No recipes found matching your criteria.[/red]')
+        return
+
+    console.print(f'\n[bold green]Found {len(matches)} recipe(s):[/bold green]\n')
+
+    results_table = Table(show_header=True, header_style='bold cyan', box=box.ROUNDED)
+    results_table.add_column('#', style='dim', width=3)
+    results_table.add_column('Recipe Name', style='yellow')
+    results_table.add_column('Match %', justify='center')
+    results_table.add_column('Cook Time', justify='center')
+    results_table.add_column('Difficulty', justify='center')
+    results_table.add_column('Missing', style='dim')
+
+    for idx, match in enumerate(matches[:limit], 1):
+        recipe = match['recipe']
+        match_pct = f'{match["match_percentage"] * 100:.0f}%'
+        missing = f'{match["missing_count"]} items'
+
+        results_table.add_row(
+            str(idx),
+            _escape_markup(recipe['name']),
+            match_pct,
+            _escape_markup(f'{recipe["cook_time"]} min'),
+            _escape_markup(recipe['difficulty']),
+            missing,
+        )
+
+    console.print(results_table)
+
+
 def find_recipes_menu():
     """Menu for finding recipes by ingredients."""
     console.print('\n[bold yellow]🔍 Find Recipes by Ingredients[/bold yellow]\n')
@@ -247,36 +283,7 @@ def find_recipes_menu():
     }
     matches = [m for m in matches if id(m['recipe']) in allowed]
 
-    if not matches:
-        console.print('\n[red]No recipes found matching your criteria.[/red]')
-        return
-
-    # Display results
-    console.print(f'\n[bold green]Found {len(matches)} recipe(s):[/bold green]\n')
-
-    results_table = Table(show_header=True, header_style='bold cyan', box=box.ROUNDED)
-    results_table.add_column('#', style='dim', width=3)
-    results_table.add_column('Recipe Name', style='yellow')
-    results_table.add_column('Match %', justify='center')
-    results_table.add_column('Cook Time', justify='center')
-    results_table.add_column('Difficulty', justify='center')
-    results_table.add_column('Missing', style='dim')
-
-    for idx, match in enumerate(matches[:10], 1):  # Show top 10
-        recipe = match['recipe']
-        match_pct = f'{match["match_percentage"] * 100:.0f}%'
-        missing = f'{match["missing_count"]} items'
-
-        results_table.add_row(
-            str(idx),
-            _escape_markup(recipe['name']),
-            match_pct,
-            _escape_markup(f'{recipe["cook_time"]} min'),
-            _escape_markup(recipe['difficulty']),
-            missing,
-        )
-
-    console.print(results_table)
+    show_matches(matches)
 
     # Let user view a recipe
     if Confirm.ask('\nWould you like to view a recipe in detail?'):
@@ -997,8 +1004,56 @@ def main_menu():  # noqa: C901  # noqa: C901
             break
 
 
-def main():
+def parse_args(argv=None):
+    """Parse command-line options. With none, the interactive menu starts."""
+    parser = argparse.ArgumentParser(
+        prog='ai_chef.py',
+        description='Terminal cooking assistant with optional AI features.',
+    )
+    parser.add_argument(
+        '--photo',
+        metavar='PATH',
+        help='read ingredients from a photo of a fridge shelf or counter, then list recipes',
+    )
+    parser.add_argument(
+        '--photo-model',
+        metavar='MODEL',
+        help='vision model for --photo (defaults to OPENAI_MODEL)',
+    )
+    args = parser.parse_args(argv)
+    if args.photo_model and not args.photo:
+        parser.error('--photo-model requires --photo')
+    return args
+
+
+def run_photo_flow(image_path, model=None):
+    """Read ingredients from a photo and show the recipes they unlock.
+
+    Returns the process exit code: 0 when the search ran, 1 when the photo
+    could not be read or the endpoint could not answer.
+    """
+    console.print(
+        f'\n[bold yellow]📷 Reading ingredients from {_escape_markup(image_path)}[/bold yellow]\n'
+    )
+
+    result = extract_ingredients_from_photo(image_path, model=model)
+    if 'error' in result:
+        console.print(f'[red]{_escape_markup(result["error"])}[/red]')
+        return 1
+
+    ingredients = result['ingredients']
+    console.print('[bold]Ingredients found:[/bold] ' + _escape_markup(', '.join(ingredients)))
+
+    show_matches(find_recipes_by_ingredients(ingredients))
+    return 0
+
+
+def main(argv=None):
     """Main application entry point."""
+    args = parse_args(argv)
+    if args.photo:
+        return run_photo_flow(args.photo, args.photo_model)
+
     display_banner()
     console.print('[dim]Making cooking easier, one recipe at a time...[/dim]\n')
 
@@ -1021,7 +1076,8 @@ def main():
         # reports; keep the full trace available without making it noisy.
         if os.getenv('AI_CHEF_DEBUG'):
             console.print_exception(show_locals=False)
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
