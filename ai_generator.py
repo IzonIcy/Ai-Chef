@@ -5,6 +5,7 @@ AI-powered recipe generation using OpenAI API Infrastructure.
 import json
 import os
 import re
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -18,19 +19,63 @@ client = None
 DEFAULT_MODEL = 'gpt-4o-mini'
 
 
+def resolve_settings(api_key=None, base_url=None, model=None):
+    """Resolve the key, endpoint and model the client should use.
+
+    ``base_url`` is optional and keeps the default OpenAI endpoint when it is
+    unset. Setting it points every call at any OpenAI-compatible server, such as
+    a local Ollama. Those servers ignore auth, but the client still refuses to
+    start without a key, so a placeholder is supplied only when a base URL is
+    configured.
+
+    Raises ValueError when the base URL is not an http(s) URL, so a typo comes
+    back as one readable line instead of a traceback from inside the client.
+    """
+    base = (base_url or '').strip() or None
+    if base is not None:
+        parsed = urlparse(base)
+        if parsed.scheme not in ('http', 'https') or not parsed.netloc:
+            raise ValueError(
+                'OPENAI_BASE_URL must be an http(s) URL such as '
+                f'http://localhost:11434/v1, got {base_url!r}'
+            )
+
+    return {
+        'api_key': (api_key or '').strip() or ('not-needed' if base else None),
+        'base_url': base,
+        'model': (model or '').strip() or DEFAULT_MODEL,
+    }
+
+
+def _resolve_from_env():
+    """Read the endpoint settings from the environment."""
+    return resolve_settings(
+        api_key=os.getenv('OPENAI_API_KEY'),
+        base_url=os.getenv('OPENAI_BASE_URL'),
+        model=os.getenv('OPENAI_MODEL'),
+    )
+
+
 def _get_client():
     """Get or create OpenAI client."""
     global client
     if client is None:
-        api_key = os.getenv('OPENAI_API_KEY')
-        if api_key:
-            client = OpenAI(api_key=api_key, timeout=60.0)
+        settings = _resolve_from_env()
+        if settings['api_key']:
+            if settings['base_url']:
+                client = OpenAI(
+                    api_key=settings['api_key'],
+                    base_url=settings['base_url'],
+                    timeout=60.0,
+                )
+            else:
+                client = OpenAI(api_key=settings['api_key'], timeout=60.0)
     return client
 
 
 def _get_model():
     """Resolve the model to use: OPENAI_MODEL env override, else DEFAULT_MODEL."""
-    return os.getenv('OPENAI_MODEL') or DEFAULT_MODEL
+    return _resolve_from_env()['model']
 
 
 def generate_recipe_with_ai(  # noqa: C901
