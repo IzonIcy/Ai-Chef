@@ -7,6 +7,11 @@ versioning follows [SemVer](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `OPENAI_BASE_URL` points every AI call at any OpenAI-compatible endpoint, so a local Ollama server works without a key.
+- `python ai_chef.py --photo fridge.jpg` reads food ingredients out of a photo with a vision model, then runs the usual ingredient search on them. `--photo-model` overrides the model for one run. A missing file, an unsupported image type, an unreachable endpoint, and a reply with no ingredients each print one line and exit instead of raising.
+
 ### Fixed
 
 - Scaling a recipe down to a single unit rendered "1 cups broccoli". Known

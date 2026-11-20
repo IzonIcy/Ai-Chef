@@ -24,6 +24,7 @@ That table is option 1 on the non-AI path. The finder, search, pantry, planner, 
 - Keeps cooking streaks, achievements, and weekly challenges.
 - Scales a recipe up or down, quantities included.
 - Generates a custom recipe from a description, gives cooking tips, and suggests substitutions when an OpenAI key is set.
+- Reads the ingredients out of a photo of a fridge shelf or a counter, given a vision model.
 
 ## How it compares
 
@@ -65,6 +66,33 @@ cp .env.example .env
 ```bash
 OPENAI_API_KEY=sk-your-key-here
 ```
+
+### Local models and photos
+
+Any OpenAI-compatible endpoint works, so the AI features can run against a local Ollama install instead of the hosted API.
+
+```bash
+ollama serve
+ollama pull llama3.2-vision
+```
+
+```bash
+export OPENAI_BASE_URL=http://localhost:11434/v1
+export OPENAI_MODEL=llama3.2-vision
+python ai_chef.py
+```
+
+`OPENAI_BASE_URL` is optional and defaults to the OpenAI endpoint. `OPENAI_MODEL` overrides the model name. A local server that ignores auth needs no key; when `OPENAI_BASE_URL` is set and no key is, the client sends a placeholder.
+
+With a vision model configured, `--photo` reads a picture and runs the usual ingredient search on what it finds:
+
+```bash
+python ai_chef.py --photo fridge.jpg
+```
+
+It prints the ingredients it read before the matching recipes, so a bad extraction is obvious. `--photo-model` picks a different model for that one call. JPG, PNG, GIF, and WebP files are accepted.
+
+With no key and no base URL, `--photo` prints what to set and exits, and every other feature keeps working as before.
 
 ## Docker
 
