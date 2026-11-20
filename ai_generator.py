@@ -332,28 +332,49 @@ _INGREDIENT_LABEL = re.compile(r'^\s*ingredients?\s*:\s*', re.IGNORECASE)
 _EMPTY_ANSWERS = {'none', 'nothing', 'n/a', 'no ingredients', 'none visible'}
 
 
-def extract_ingredients_from_photo(image_path, model=None):
+def _image_part(image_path):
+    """Return (image part, None) for a readable image, or (None, error line)."""
+    path = Path(image_path)
+    mime_type = SUPPORTED_IMAGE_TYPES.get(path.suffix.lower())
+    if mime_type is None:
+        suffix = path.suffix or 'no extension'
+        return None, (f"Unsupported image type '{suffix}'. Use .jpg, .jpeg, .png, .gif or .webp.")
+
+    try:
+        image_bytes = path.read_bytes()
+    except OSError as e:
+        return None, f'Could not read {path}: {e.strerror or e}'
+
+    if not image_bytes:
+        return None, f'Could not read {path}: the file is empty'
+
+    encoded = base64.b64encode(image_bytes).decode('ascii')
+    return {'type': 'image_url', 'image_url': {'url': f'data:{mime_type};base64,{encoded}'}}, None
+
+
+def extract_ingredients_from_photo(image_path=None, model=None, *, scene=None):
     """Read the food ingredients visible in an image.
+
+    ``scene`` is a written description of the picture, used when there is no
+    photo to read. That is how ``scripts/eval_ingredients.py`` measures this path
+    against a labelled set without shipping images; ``image_path`` is then
+    ignored. With a path and no scene, the image is sent as before.
 
     Returns ``{'ingredients': [...]}`` on success and ``{'error': ...}`` for a
     file that cannot be used or an endpoint that answers with nothing usable.
     Nothing raises at the caller, so the CLI can print one line and exit.
     """
-    path = Path(image_path)
-    mime_type = SUPPORTED_IMAGE_TYPES.get(path.suffix.lower())
-    if mime_type is None:
-        suffix = path.suffix or 'no extension'
-        return {
-            'error': f"Unsupported image type '{suffix}'. Use .jpg, .jpeg, .png, .gif or .webp."
-        }
+    if image_path is None and scene is None:
+        return {'error': 'Pass a photo path or a scene description.'}
 
-    try:
-        image_bytes = path.read_bytes()
-    except OSError as e:
-        return {'error': f'Could not read {path}: {e.strerror or e}'}
-
-    if not image_bytes:
-        return {'error': f'Could not read {path}: the file is empty'}
+    parts = [{'type': 'text', 'text': PHOTO_PROMPT}]
+    if scene is None:
+        image_part, error = _image_part(image_path)
+        if error:
+            return {'error': error}
+        parts.append(image_part)
+    else:
+        parts.append({'type': 'text', 'text': f'No photo is available. Scene: {scene}'})
 
     try:
         client_instance = _get_client()
@@ -363,7 +384,6 @@ def extract_ingredients_from_photo(image_path, model=None):
     if not client_instance:
         return {'error': NO_ENDPOINT_MESSAGE}
 
-    encoded = base64.b64encode(image_bytes).decode('ascii')
     try:
         response = client_instance.chat.completions.create(
             model=model or _get_model(),
@@ -372,16 +392,7 @@ def extract_ingredients_from_photo(image_path, model=None):
                     'role': 'system',
                     'content': 'You identify food ingredients in photos. Reply with the list only.',
                 },
-                {
-                    'role': 'user',
-                    'content': [
-                        {'type': 'text', 'text': PHOTO_PROMPT},
-                        {
-                            'type': 'image_url',
-                            'image_url': {'url': f'data:{mime_type};base64,{encoded}'},
-                        },
-                    ],
-                },
+                {'role': 'user', 'content': parts},
             ],
             temperature=0.2,
             max_tokens=300,

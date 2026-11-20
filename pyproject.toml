@@ -32,6 +32,10 @@ target-version = "py312"
 select = ["E", "F", "I", "W", "C90", "UP", "B", "SIM", "T20"]
 ignore = []
 
+[tool.ruff.lint.per-file-ignores]
+# The eval scripts talk to stdout by design; there is no Rich console to use.
+"scripts/*" = ["T201"]
+
 [tool.ruff.format]
 quote-style = "single"
 indent-style = "space"
@@ -49,6 +53,7 @@ files = [
     "json_store.py",
     "meal_planner.py",
     "recipes.py",
+    "scripts/eval_ingredients.py",
 ]
 warn_return_any = true
 warn_unused_configs = true
