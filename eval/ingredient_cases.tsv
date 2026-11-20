@@ -1,0 +1,21 @@
+case_id	description	expected
+fridge-shelf-meat	A fridge shelf with a raw chicken breast, a pack of ground beef and a block of butter.	butter, chicken, ground beef
+crisper-drawer-veg	A crisper drawer holding a head of broccoli, a zucchini and two carrots.	broccoli, carrot, zucchini
+counter-pasta-night	A counter with a box of pasta, a bowl of tomatoes, a head of garlic and a wedge of parmesan.	pasta, tomatoes, garlic, parmesan
+pantry-dry-goods	A pantry shelf with a bag of rice, a can of black beans and a bottle of olive oil.	rice, black beans, olive oil
+salad-board	A cutting board with a head of romaine lettuce, a cucumber and a lemon.	romaine lettuce, cucumber, lemon
+breakfast-counter	A counter with a banana, a tub of greek yogurt and a bag of granola.	banana, greek yogurt, granola
+curry-mise	A tray of chopped onion, ginger and garlic next to a bowl of chickpeas.	onion, ginger, garlic, chickpeas
+taco-night	A counter with a stack of tortillas, a pack of ground beef, a packet of taco seasoning and a lime.	tortillas, ground beef, taco seasoning, lime
+stir-fry-prep	A counter with a block of tofu, a head of broccoli, a bell pepper and a bottle of soy sauce.	tofu, broccoli, bell pepper, soy sauce
+sandwich-fixings	A counter with a baguette, a wedge of cheese, an avocado and a tomato.	baguette, cheese, avocado, tomato
+broth-shelf	A fridge shelf with a carton of chicken broth, a knob of ginger and a bag of noodles.	chicken broth, ginger, noodles
+soup-veg	A counter with two carrots, an onion, a sweet potato and a carton of vegetable broth.	carrot, onion, sweet potato, vegetable broth
+fish-dinner	A counter with a salmon fillet, a lemon and a bunch of thyme.	salmon, lemon, thyme
+shrimp-tacos	A counter with a bowl of shrimp, a stack of tortillas and a bunch of cilantro.	shrimp, tortillas, cilantro
+hummus-plate	A counter with a jar of tahini, a can of chickpeas and a lemon.	tahini, chickpeas, lemon
+green-smoothie	A fridge shelf with a bag of spinach, a bunch of kale, a punnet of berries and a can of coconut milk.	spinach, kale, berries, coconut milk
+cheese-board	A board with a wedge of gruyere, a sliced baguette and a handful of parsley.	gruyere, baguette, parsley
+fridge-door	A fridge door with a tub of sour cream, a bottle of caesar dressing and a bottle of white wine.	sour cream, caesar dressing, white wine
+spice-shelf	A spice shelf with jars of cumin, curry powder and garam masala next to a bag of sesame seeds.	cumin, curry powder, garam masala, sesame seeds
+salad-crunch	A bowl of chopped lettuce next to croutons and a jar of caesar dressing.	lettuce, croutons, caesar dressing
