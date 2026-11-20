@@ -20,7 +20,11 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-import ai_generator
+# Running this file directly puts scripts/ on sys.path, not the repository root,
+# so the app modules resolve only when the project has been installed.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+import ai_generator  # noqa: E402 - the path fix has to run before this import
 
 CASES_PATH = Path(__file__).resolve().parents[1] / 'eval' / 'ingredient_cases.tsv'
 FIELDS = ('case_id', 'description', 'expected')
