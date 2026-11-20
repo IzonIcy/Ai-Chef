@@ -340,38 +340,64 @@ def extract_ingredients_from_photo(image_path, model=None):
     Nothing raises at the caller, so the CLI can print one line and exit.
     """
     path = Path(image_path)
-    mime_type = SUPPORTED_IMAGE_TYPES.get(path.suffix.lower(), 'image/jpeg')
-    image_bytes = path.read_bytes()
+    mime_type = SUPPORTED_IMAGE_TYPES.get(path.suffix.lower())
+    if mime_type is None:
+        suffix = path.suffix or 'no extension'
+        return {
+            'error': f"Unsupported image type '{suffix}'. Use .jpg, .jpeg, .png, .gif or .webp."
+        }
 
-    client_instance = _get_client()
+    try:
+        image_bytes = path.read_bytes()
+    except OSError as e:
+        return {'error': f'Could not read {path}: {e.strerror or e}'}
+
+    if not image_bytes:
+        return {'error': f'Could not read {path}: the file is empty'}
+
+    try:
+        client_instance = _get_client()
+    except ValueError as e:
+        return {'error': f'Could not use the configured endpoint: {e}'}
+
     if not client_instance:
         return {'error': NO_ENDPOINT_MESSAGE}
 
     encoded = base64.b64encode(image_bytes).decode('ascii')
-    response = client_instance.chat.completions.create(
-        model=model or _get_model(),
-        messages=[
-            {
-                'role': 'system',
-                'content': 'You identify food ingredients in photos. Reply with the list only.',
-            },
-            {
-                'role': 'user',
-                'content': [
-                    {'type': 'text', 'text': PHOTO_PROMPT},
-                    {
-                        'type': 'image_url',
-                        'image_url': {'url': f'data:{mime_type};base64,{encoded}'},
-                    },
-                ],
-            },
-        ],
-        temperature=0.2,
-        max_tokens=300,
-    )
+    try:
+        response = client_instance.chat.completions.create(
+            model=model or _get_model(),
+            messages=[
+                {
+                    'role': 'system',
+                    'content': 'You identify food ingredients in photos. Reply with the list only.',
+                },
+                {
+                    'role': 'user',
+                    'content': [
+                        {'type': 'text', 'text': PHOTO_PROMPT},
+                        {
+                            'type': 'image_url',
+                            'image_url': {'url': f'data:{mime_type};base64,{encoded}'},
+                        },
+                    ],
+                },
+            ],
+            temperature=0.2,
+            max_tokens=300,
+        )
+    except Exception as e:  # noqa: BLE001 - surface any API error to the user
+        return {'error': f'Photo request failed: {e!s}'}
 
-    reply = response.choices[0].message.content or ''
-    return {'ingredients': parse_ingredient_list(reply)}
+    reply = (response.choices[0].message.content or '').strip()
+    if not reply:
+        return {'error': 'The model returned an empty response.'}
+
+    ingredients = parse_ingredient_list(reply)
+    if not ingredients:
+        return {'error': 'The model response did not contain any ingredient names.'}
+
+    return {'ingredients': ingredients}
 
 
 def parse_ingredient_list(text):
